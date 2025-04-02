@@ -1,0 +1,11 @@
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+*.pyo
+
+#Virtual Environment
+venv/
+.env
+
+#VSCode
+.vscode/
