@@ -36,14 +36,22 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'django.contrib.admin',
+    'rest_framework_simplejwt',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'finance',
     'rest_framework',
+    # 'rest_framework_simplejwt.token_blacklist',
+    'finance',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -81,17 +89,6 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 import os
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'financedb',
-#         'USER': 'dev',
-#         'PASSWORD': 'dev@123',
-#         'HOST': 'localhost',  
-#         'PORT': '5432',       
-#     }
-# }
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -103,6 +100,8 @@ DATABASES = {
     }
 }
 
+# set default_auth_user_model to CustomUser model
+AUTH_USER_MODEL = 'finance.CustomUser'
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -144,3 +143,14 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  
+    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=1440),  
+    'ROTATE_REFRESH_TOKENS': False,  # Generates a new refresh token when used
+    'BLACKLIST_AFTER_ROTATION': False,  # Blacklist old refresh tokens
+    'AUTH_HEADER_TYPES': ('Bearer',),  # Token prefix
+}
