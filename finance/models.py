@@ -14,6 +14,14 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.username
     
+    @property
+    def balance(self):
+        '''
+            here we have to fetch all transactions of user by backward relationship
+        '''
+        total_amount = self.transactions.aggregate(total=models.Sum('amount'))['total']
+        return total_amount or 0
+    
 
 
 class Category(DateTimeMixin):
@@ -97,3 +105,8 @@ class Transaction(DateTimeMixin):
         '''
         self.is_deleted = False
         self.save(update_fields=['is_deleted'])
+
+    # @classmethod
+    # def get_user_balance(cls, user_id):
+    #     total_amount = cls.objects.filter(user_id=user_id, is_deleted=False).aggregate(total=models.Sum('amount'))['total']
+    #     return total_amount or 0  
