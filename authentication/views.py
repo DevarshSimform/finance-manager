@@ -14,8 +14,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from finance.serializers import RegisterSerializer, LoginSerializer
 from finance.models import CustomUser
-
-
+from authentication.utils import encrypt_password, decrypt_password
 
 
 redis_client = Redis()
@@ -23,21 +22,21 @@ redis_client = Redis()
 # Register user API with email verification (2FA)
 
 class RegisterAPIView(APIView):
-    
+
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             data = serializer.validated_data
             token = secrets.token_urlsafe(32)
 
-            # Implement hashed password stored in redis
+            # encrypt password before saving into redis
             redis_data = {
                 "username": data["username"],
                 "email": data["email"],
-                "password": data["password"],  
+                "password": encrypt_password(data["password"]),  
             }
 
-            redis_client.setex(f"verify:{token}", 120, json.dumps(redis_data))  # 15 min
+            redis_client.setex(f"verify:{token}", 120, json.dumps(redis_data))  # 2 min
 
             verification_url = f"http://localhost:8000/api/verify-email/?token={token}"
             html_content = render_to_string("authentication/register_email.html", {
@@ -78,10 +77,11 @@ class VerifyEmailAPIView(APIView):
         if CustomUser.objects.filter(email=user_data["email"]).exists():
             return Response({"error": "User already registered."}, status=400)
 
+        # Decrypt password after get encrypted_passwrod from redis
         user = CustomUser.objects.create_user(
             username=user_data["username"],
             email=user_data["email"],
-            password=make_password(user_data["password"]),
+            password=decrypt_password(make_password(user_data["password"])),
         )
 
         redis_client.delete(redis_key)
