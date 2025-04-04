@@ -6,10 +6,6 @@ urlpatterns = [
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
-    path('login/', views.LoginAPIView.as_view()),
-    path('logout/', views.LogoutAPIView.as_view()),
-    path('register/', views.RegisterAPIView.as_view()),
-
     path('transactions/', views.TransactionListCreateApiView.as_view()),
     path('transactions/<uuid:pk>/', views.TransactionRetrieveUpdateDestroyApiView.as_view()),
     path('balance/', views.BalanceViewAPIView.as_view()),
