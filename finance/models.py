@@ -33,7 +33,7 @@ class Category(DateTimeMixin):
 
     def save(self, *args, **kwargs):
         '''
-            override save method to save category name into lowercase
+            Override save method to save category name into lowercase
         '''
         self.name = self.name.lower()
         super().save(*args, **kwargs)
@@ -108,5 +108,8 @@ class Transaction(DateTimeMixin):
 
     # @classmethod
     # def get_user_balance(cls, user_id):
+    #     '''
+    #         Another approach to find user's balance but It is class dependent.
+    #     '''
     #     total_amount = cls.objects.filter(user_id=user_id, is_deleted=False).aggregate(total=models.Sum('amount'))['total']
     #     return total_amount or 0  
