@@ -67,8 +67,10 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class TransactionSerializer(serializers.ModelSerializer):
     '''
-        
+        Serializer for Transactions with validation of amount
     '''
+    user_id = serializers.StringRelatedField()
+    category_id = serializers.StringRelatedField()
     class Meta:
         model = Transaction
         fields = ['id', 'user_id', 'category_id', 'amount', 'type', 'description', 'created_at', 'updated_at']
@@ -92,7 +94,7 @@ class TransactionSerializer(serializers.ModelSerializer):
             data['amount'] = -amount
         elif transaction_type == Transaction.INCOME and amount < 0:
             data['amount'] = abs(amount)
-        
+
         return data
     
     def update(self, instance, validated_data):

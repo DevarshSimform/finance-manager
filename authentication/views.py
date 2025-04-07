@@ -36,10 +36,10 @@ class RegisterAPIView(APIView):
                 "password": encrypt_password(data["password"]),  
             }
 
-            redis_client.setex(f"verify:{token}", 120, json.dumps(redis_data))  # 2 min
+            redis_client.setex(f"verify:{token}", 180, json.dumps(redis_data))  # 2 min
 
             verification_url = f"http://localhost:8000/api/verify-email/?token={token}"
-            html_content = render_to_string("authentication/register_email.html", {
+            html_content = render_to_string("authentication/regstration_email.html", {
                 "username": data["username"],
                 "verification_url": verification_url
             })
@@ -81,9 +81,10 @@ class VerifyEmailAPIView(APIView):
         user = CustomUser.objects.create_user(
             username=user_data["username"],
             email=user_data["email"],
-            password=decrypt_password(make_password(user_data["password"])),
+            password=make_password(decrypt_password(user_data["password"])),
         )
 
+        # After user created successfully, deleting user-data from redis
         redis_client.delete(redis_key)
         return Response({"message": "Email verified. Account created successfully!"})
 
