@@ -1,19 +1,19 @@
+from django.contrib.auth import authenticate
+
 from finance.models import CustomUser, Category, Transaction
-from django.utils.timezone import now
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+from rest_framework_simplejwt.tokens import RefreshToken
 
-class CustomUserSerializer(serializers.ModelSerializer):
+class RegisterSerializer(serializers.ModelSerializer):
+    '''
+        Serializer for user registration
+    '''
+    # here we accept password from client but not sending it into response by setting write-only is True
+    password = serializers.CharField(write_only=True, min_length=6, required=True)
     class Meta:
-        '''
-            
-        '''
         model = CustomUser
         fields = ['id', 'username', 'email', 'password']
-        # here we accept password from client but not sending it into response by setting write-only is True
-        extra_kwargs = {
-            'passowrd': {'write_only': True},
-        }
 
     def create(self, validated_data):
         '''
@@ -22,6 +22,36 @@ class CustomUserSerializer(serializers.ModelSerializer):
         user = CustomUser.objects.create_user(**validated_data)
         return user
     
+
+class LoginSerializer(serializers.Serializer):
+    '''
+        Serializer for user login
+    '''
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        '''
+            To validate login credentials (email, password)
+        '''
+        email = data.get('email')
+        password = data.get('password')
+        user = authenticate(email=email, password=password)
+        if not user:
+            raise ValidationError("Invalid email or password")
+        
+        refresh = RefreshToken.for_user(user)
+        return {
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "username": user.username
+            },
+            "access": str(refresh.access_token),
+            "refresh": str(refresh), 
+        }
+
+
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -37,8 +67,10 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class TransactionSerializer(serializers.ModelSerializer):
     '''
-        
+        Serializer for Transactions with validation of amount
     '''
+    user_id = serializers.StringRelatedField()
+    category_id = serializers.StringRelatedField()
     class Meta:
         model = Transaction
         fields = ['id', 'user_id', 'category_id', 'amount', 'type', 'description', 'created_at', 'updated_at']
@@ -62,7 +94,7 @@ class TransactionSerializer(serializers.ModelSerializer):
             data['amount'] = -amount
         elif transaction_type == Transaction.INCOME and amount < 0:
             data['amount'] = abs(amount)
-        
+
         return data
     
     def update(self, instance, validated_data):
@@ -79,4 +111,5 @@ class TransactionSerializer(serializers.ModelSerializer):
             validated_data['amount'] = abs(amount)
 
         return super().update(instance, validated_data)
+    
     

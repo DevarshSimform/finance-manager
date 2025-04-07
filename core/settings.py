@@ -43,8 +43,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    # 'rest_framework_simplejwt.token_blacklist',
+    'rest_framework_simplejwt.token_blacklist',
+    'django_celery_beat',
     'finance',
+    'authentication',
+    'developersOnly',
 ]
 
 REST_FRAMEWORK = {
@@ -148,9 +151,28 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  
-    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=1440),  
-    'ROTATE_REFRESH_TOKENS': False,  # Generates a new refresh token when used
-    'BLACKLIST_AFTER_ROTATION': False,  # Blacklist old refresh tokens
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=60),
+    'ROTATE_REFRESH_TOKENS': True,  # Generates a new refresh token when used
+    'BLACKLIST_AFTER_ROTATION': True,  # Blacklist old refresh tokens
     'AUTH_HEADER_TYPES': ('Bearer',),  # Token prefix
 }
+
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Or your Redis setup
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+
+EMAIL_BACKEND = "mailer.backend.DbBackend"
+ 
+# Configure Email (SMTP example)
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+ 
