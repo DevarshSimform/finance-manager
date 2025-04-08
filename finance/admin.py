@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from finance.models import CustomUser, Category, Transaction
+from guardian.admin import GuardedModelAdmin
 
 
 # @admin.register(CustomUser)
@@ -33,7 +34,7 @@ class CustomUserAdmin(UserAdmin):
     search_fields = ('email', 'username')
 
 @admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
+class CategoryAdmin(GuardedModelAdmin):
     model = Category
     list_display = ['id', 'name']
 

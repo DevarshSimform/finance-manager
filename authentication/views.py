@@ -81,7 +81,7 @@ class VerifyEmailAPIView(APIView):
         user = CustomUser.objects.create_user(
             username=user_data["username"],
             email=user_data["email"],
-            password=make_password(decrypt_password(user_data["password"])),
+            password=decrypt_password(user_data["password"]),
         )
 
         # After user created successfully, deleting user-data from redis

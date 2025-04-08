@@ -74,12 +74,3 @@ class RestoreUserAPIView(APIView):
         user.restore()
         return Response({'message': 'User restored'}, status=status.HTTP_200_OK)
     
-
-class HardDeleteUserAPIView(APIView):
-    ''' To delete user permanently user (hard-delete) '''
-    def post(self, request, pk):
-        user = get_object_or_404(CustomUser.objects.with_deleted, pk=pk)
-        if not user:
-            return Response({'message': 'User doesnot exists'}, status=status.HTTP_400_BAD_REQUEST)
-        user.delete(hard=True)
-        return Response({'message': 'User hard deleted'}, status=status.HTTP_200_OK)
