@@ -15,6 +15,4 @@ urlpatterns = [
     path('category/<uuid:pk>/', views.CategoryRetrieveUpdateDestroyAPIView.as_view()),
 
 
-    # path('group/', views.group_adding.as_view())
-
 ]

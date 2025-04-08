@@ -12,3 +12,6 @@ class IsAuthenticatedAndOwner(BasePermission):
         if request.user.is_superuser:
             return True
         return bool(request.user and request.user.is_authenticated)
+    
+    def has_object_permission(self, request, view, obj):
+        return request.user.has_perm('finance.view_category', obj) or request.user.is_superuser

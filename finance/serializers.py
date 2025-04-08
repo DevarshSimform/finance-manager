@@ -65,6 +65,7 @@ class CategorySerializer(serializers.ModelSerializer):
         return value.lower()
 
 
+
 class TransactionSerializer(serializers.ModelSerializer):
     '''
         Serializer for Transactions with validation of amount
