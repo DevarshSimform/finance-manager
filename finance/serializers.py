@@ -1,3 +1,4 @@
+import re
 from django.contrib.auth import authenticate
 
 from finance.models import CustomUser, Category, Transaction
@@ -54,6 +55,8 @@ class LoginSerializer(serializers.Serializer):
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+    updated_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
     class Meta:
         model = Category
         fields = ['id', 'name', 'created_at', 'updated_at']
@@ -62,7 +65,17 @@ class CategorySerializer(serializers.ModelSerializer):
         '''
             Converts category name to lowercase
         '''
-        return value.lower()
+        # Trim, reduce multiple spaces to single space, and lowercase
+        value = re.sub(r'\s+', ' ', value.strip()).lower()
+        
+        # Validate with regex
+        pattern = r'^[a-z0-9\- ]{3,50}$'
+        if not re.match(pattern, value):
+            raise serializers.ValidationError(
+                "Category name must be 3 to 50 characters long, and only include lowercase letters, numbers, dashes, and single spaces."
+            )
+
+        return value
 
 
 

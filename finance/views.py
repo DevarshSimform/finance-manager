@@ -24,6 +24,7 @@ class CategoryListAPIView(ListAPIView):
     # queryset = Category.objects.all()
 
     def get_queryset(self):
+        ''' It will return queryset of category objects which is accessible by request.user '''
         if self.request.user.is_superuser:
             return Category.objects.all()
         return get_objects_for_user(self.request.user, 'view_category', Category)
@@ -68,7 +69,7 @@ class CategoryRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
             if serializer.is_valid():
                 if request.user.has_perm('finance.view_category', category) and not checker.has_perm('view_category', category):
                     serializer.save()
-                    return Response({'message': 'Category Updated'}, status=status.HTTP_200_OK)
+                    return Response({'message': 'Category Updated', 'updated_category': serializer.data}, status=status.HTTP_200_OK)
                 else:
                     return Response({'message': 'You cannot update this category'}, status=status.HTTP_403_FORBIDDEN)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -82,7 +83,6 @@ class CategoryRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
 
 
     def destroy(self, request, *args, **kwargs):
-        print(request.data)
         try:
             category = Category.objects.get(id=request.data.get('id'))
             group = Group.objects.get(name='default_categories')
