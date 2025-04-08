@@ -1,6 +1,7 @@
 import redis,time
 
 from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.models import Group
 from finance.models import Transaction, Category
 from finance.serializers import CategorySerializer, TransactionSerializer
 from finance.signals import post_save_with_request
