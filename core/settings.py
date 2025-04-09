@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'guardian',
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
     'django_celery_beat',
@@ -56,6 +57,12 @@ REST_FRAMEWORK = {
     )
 }
 
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend', # this is default
+    'guardian.backends.ObjectPermissionBackend',
+)
+
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -65,6 +72,7 @@ CACHES = {
         }
     }
 }
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -140,7 +148,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 
@@ -161,10 +169,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
-    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=60),
-    'ROTATE_REFRESH_TOKENS': True,  # Generates a new refresh token when used
-    'BLACKLIST_AFTER_ROTATION': True,  # Blacklist old refresh tokens
+    'ACCESS_TOKEN_LIFETIME': timedelta(
+        minutes=int(os.getenv('ACCESS_TOKEN_LIFETIME_MIN'))
+    ),
+    'REFRESH_TOKEN_LIFETIME': timedelta(
+        minutes=int(os.getenv('REFRESH_TOKEN_LIFETIME_MIN'))
+    ),
+    'ROTATE_REFRESH_TOKENS': os.getenv('ROTATE_REFRESH_TOKENS'),  # Generates a new refresh token when used
+    'BLACKLIST_AFTER_ROTATION': os.getenv('BLACKLIST_AFTER_ROTATION'),  # Blacklist old refresh tokens
     'AUTH_HEADER_TYPES': ('Bearer',),  # Token prefix
 }
 
@@ -176,7 +188,6 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 
-EMAIL_BACKEND = "mailer.backend.DbBackend"
  
 # Configure Email (SMTP example)
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

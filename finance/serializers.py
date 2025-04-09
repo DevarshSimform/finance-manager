@@ -1,3 +1,4 @@
+import re
 from django.contrib.auth import authenticate
 
 from finance.models import CustomUser, Category, Transaction
@@ -21,6 +22,16 @@ class RegisterSerializer(serializers.ModelSerializer):
         '''
         user = CustomUser.objects.create_user(**validated_data)
         return user
+    
+
+
+class UserDetailSerializer(serializers.ModelSerializer):
+    date_joined = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+    current_balance = serializers.ReadOnlyField(source='balance')
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'username', 'email', 'current_balance', 'is_active', 'date_joined']
+
     
 
 class LoginSerializer(serializers.Serializer):
@@ -54,6 +65,8 @@ class LoginSerializer(serializers.Serializer):
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+    updated_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
     class Meta:
         model = Category
         fields = ['id', 'name', 'created_at', 'updated_at']
@@ -62,7 +75,25 @@ class CategorySerializer(serializers.ModelSerializer):
         '''
             Converts category name to lowercase
         '''
-        return value.lower()
+        # Trim, reduce multiple spaces to single space, and lowercase
+        value = re.sub(r'\s+', ' ', value.strip()).lower()
+        
+        # Validate with regex
+        pattern = r'^[a-z0-9\- ]{3,50}$'
+        if not re.match(pattern, value):
+            raise serializers.ValidationError(
+                "Category name must be 3 to 50 characters long, and only include lowercase letters, numbers, dashes, and single spaces."
+            )
+        
+        return value
+
+
+
+class CategoryDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['id', 'name']
+
 
 
 class TransactionSerializer(serializers.ModelSerializer):
@@ -71,17 +102,19 @@ class TransactionSerializer(serializers.ModelSerializer):
     '''
     user_id = serializers.StringRelatedField()
     category_id = serializers.StringRelatedField()
+
+    # current_balance = serializers.ReadOnlyField(source='balance')
     class Meta:
         model = Transaction
-        fields = ['id', 'user_id', 'category_id', 'amount', 'type', 'description', 'created_at', 'updated_at']
+        fields = ['id', 'user_id', 'category_id', 'amount', 'type', 'description']
 
-    def validate_amount(self, value):
-        '''
-            Ensure amount is positive before (It will convert to negative for expense).
-        '''
-        if value <= 0:
-            raise ValidationError("Amount must be positive")
-        return value
+    # def validate_amount(self, value):
+    #     '''
+    #         Ensure amount is positive before (It will convert to negative for expense).
+    #     '''
+    #     if value <= 0:
+    #         raise ValidationError("Amount must be positive")
+    #     return value
     
     def validate(self, data):
         '''
@@ -99,7 +132,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     
     def update(self, instance, validated_data):
         '''
-            Override update method to store expense as negative and income as positive while perform update
+            Override update method to store expense as negative and income as positive while perform update but update is disabled now
         '''
         transaction_type = validated_data.get('type')
         amount = validated_data.get('amount')
@@ -112,4 +145,15 @@ class TransactionSerializer(serializers.ModelSerializer):
 
         return super().update(instance, validated_data)
     
+
+class TransactionDetailSerializer(serializers.ModelSerializer):
     
+    user_id = serializers.StringRelatedField()
+    category_id = serializers.StringRelatedField()
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+    updated_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+    user_info = UserDetailSerializer(source='user_id', read_only=True)
+    category_info = CategoryDetailSerializer(source='category_id', read_only=True)
+    class Meta:
+        model = Transaction
+        fields = ['id', 'user_id', 'category_id', 'amount', 'type', 'description', 'user_info', 'category_info', 'created_at', 'updated_at']

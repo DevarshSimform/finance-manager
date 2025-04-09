@@ -12,7 +12,6 @@ urlpatterns = [
     path('users/all/', views.AllUserAPIView.as_view()),
     path('users/deleted/', views.DeletedUserAPIView.as_view()),
     path('users/restore/<uuid:pk>/', views.RestoreUserAPIView.as_view()),
-    path('users/hard-delete/<uuid:pk>/', views.HardDeleteUserAPIView.as_view()),
 
 
 ]

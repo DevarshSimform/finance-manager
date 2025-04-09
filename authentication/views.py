@@ -84,6 +84,7 @@ class VerifyEmailAPIView(APIView):
         user.is_active = True
         user.save()
 
+
         cache.delete(f"verify:{token}")
 
         return Response({"message": "Email verified. Account activated successfully!"})
