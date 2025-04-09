@@ -100,13 +100,16 @@ class TransactionSerializer(serializers.ModelSerializer):
     '''
         Serializer for Transactions with validation of amount
     '''
-    user_id = serializers.StringRelatedField()
-    category_id = serializers.StringRelatedField()
+    user_email = serializers.EmailField(source='user_id.email', read_only=True)
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(), write_only=True
+    )
+    category_name = serializers.StringRelatedField(source='category_id', read_only=True)
 
     # current_balance = serializers.ReadOnlyField(source='balance')
     class Meta:
         model = Transaction
-        fields = ['id', 'user_id', 'category_id', 'amount', 'type', 'description']
+        fields = ['id', 'user_email', 'category_id', 'category_name', 'amount', 'type', 'description']
 
     # def validate_amount(self, value):
     #     '''
@@ -129,6 +132,11 @@ class TransactionSerializer(serializers.ModelSerializer):
             data['amount'] = abs(amount)
 
         return data
+    
+    def create(self, validated_data):
+        # Automatically set the user to request.user
+        validated_data['user_id'] = self.context['request'].user
+        return super().create(validated_data)
     
     def update(self, instance, validated_data):
         '''

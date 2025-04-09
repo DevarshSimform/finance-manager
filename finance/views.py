@@ -113,7 +113,8 @@ class TransactionListCreateAPIView(ListCreateAPIView):
     def perform_create(self, serializer):
         if self.request.user.is_superuser:
             raise PermissionDenied(detail='Superuser cannot create any transaction')
-
+        return super().perform_create(serializer)
+        
 
 
 class TransactionRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
