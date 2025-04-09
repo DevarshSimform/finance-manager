@@ -102,11 +102,9 @@ class TransactionSerializer(serializers.ModelSerializer):
     '''
     user_email = serializers.EmailField(source='user_id.email', read_only=True)
     category_id = serializers.PrimaryKeyRelatedField(
-        queryset=Category.objects.all(), write_only=True
+        queryset=Category.objects.all()
     )
     category_name = serializers.StringRelatedField(source='category_id', read_only=True)
-
-    # current_balance = serializers.ReadOnlyField(source='balance')
     class Meta:
         model = Transaction
         fields = ['id', 'user_email', 'category_id', 'category_name', 'amount', 'type', 'description']
@@ -123,12 +121,13 @@ class TransactionSerializer(serializers.ModelSerializer):
         '''
             converts expense to negative value and inclome to positive value
         '''
-        transaction_type = data.get('type')
+        print(data)
+        type = data.get('type')
         amount = data.get('amount')
-
-        if transaction_type == Transaction.EXPENSE and amount > 0:
+        print(amount)
+        if type == Transaction.EXPENSE and amount > 0:
             data['amount'] = -amount
-        elif transaction_type == Transaction.INCOME and amount < 0:
+        elif type == Transaction.INCOME and amount < 0:
             data['amount'] = abs(amount)
 
         return data
@@ -140,18 +139,21 @@ class TransactionSerializer(serializers.ModelSerializer):
     
     def update(self, instance, validated_data):
         '''
-            Override update method to store expense as negative and income as positive while perform update but update is disabled now
+            Only description can be updated. Others are ignored.
         '''
-        transaction_type = validated_data.get('type')
-        amount = validated_data.get('amount')
-
-        if transaction_type == Transaction.EXPENSE and amount > 0:
-            validated_data['amount'] = -amount
-            print(amount)
-        elif transaction_type == Transaction.INCOME and amount < 0:
-            validated_data['amount'] = abs(amount)
-
+        validated_data = {'description': validated_data.get('description', instance.description)}
         return super().update(instance, validated_data)
+    
+    def get_extra_kwargs(self):
+        ''' When retrieve, update, delete transaction, It has an instance of transaction all fields except description are read_only '''
+        kwargs = super().get_extra_kwargs()
+        if self.instance:
+            read_only_fields = ['id', 'category_id', 'amount', 'type']
+            for fields in read_only_fields:
+                kwargs[fields] = {'read_only': True}
+
+        return kwargs
+
     
 
 class TransactionDetailSerializer(serializers.ModelSerializer):

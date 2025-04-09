@@ -118,15 +118,17 @@ class TransactionListCreateAPIView(ListCreateAPIView):
 
 
 class TransactionRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
+    '''' Deletion of transaction is disabled and description can only be updated '''
 
     permission_classes = [IsOwnerOrAdmin]
 
     queryset = Transaction.objects.all()
-    serializer_class = TransactionDetailSerializer
-
-    def perform_update(self, serializer):
-        raise PermissionDenied(detail='You cannot update any transaction')
     
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return TransactionDetailSerializer
+        return TransactionSerializer
+
     def perform_destroy(self, serializer):
         raise PermissionDenied(detail='You cannot delete any transaction')
     

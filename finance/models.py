@@ -88,9 +88,12 @@ class Transaction(DateTimeMixin):
     '''
         Transactions table has all transactions, soft-delete implemented. Every transaction has user_id and category_id. amount is stored as per transaction type.
     '''
+    def get_other_category():
+        return Category.objects.get_or_create(name='other')
+    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='transactions')
-    category_id = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='has')
+    category_id = models.ForeignKey(Category, on_delete=models.SET(get_other_category), related_name='has', default='other')
 
     INCOME = 'income'
     EXPENSE = 'expense'
@@ -108,7 +111,6 @@ class Transaction(DateTimeMixin):
 
     def __str__(self):
         return f"{self.type} - {self.amount}"
-
 
     def save(self, *args, **kwargs):
         '''
@@ -145,3 +147,5 @@ class Transaction(DateTimeMixin):
     #     '''
     #     total_amount = cls.objects.filter(user_id=user_id, is_deleted=False).aggregate(total=models.Sum('amount'))['total']
     #     return total_amount or 0  
+
+    
