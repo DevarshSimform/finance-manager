@@ -3,15 +3,16 @@ import redis,time
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.models import Group
 from finance.models import Transaction, Category
-from finance.serializers import CategorySerializer, TransactionSerializer
+from finance.serializers import CategorySerializer, TransactionSerializer, TransactionDetailSerializer
 from finance.signals import post_save_with_request
-from finance.custompermissions import IsAuthenticatedAndOwner 
+from finance.custompermissions import HasObjectPermOrAdmin, IsOwnerOrAdmin
 
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListAPIView, CreateAPIView
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
+from rest_framework.exceptions import PermissionDenied
 
 from guardian.shortcuts import assign_perm, get_objects_for_user, ObjectPermissionChecker
 
@@ -19,7 +20,7 @@ from guardian.shortcuts import assign_perm, get_objects_for_user, ObjectPermissi
 
 class CategoryListAPIView(ListAPIView):
     
-    permission_classes = [IsAuthenticatedAndOwner]
+    permission_classes = [HasObjectPermOrAdmin]
     serializer_class = CategorySerializer
     # queryset = Category.objects.all()
 
@@ -54,7 +55,7 @@ class CategoryCreateAPIView(APIView):
 
 class CategoryRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
 
-    permission_classes = [IsAuthenticatedAndOwner]
+    permission_classes = [HasObjectPermOrAdmin]
 
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
@@ -99,20 +100,34 @@ class CategoryRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
 
 class TransactionListCreateAPIView(ListCreateAPIView):
 
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
-    queryset = Transaction.objects.all()
+    # queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
+
+    def get_queryset(self):
+        if self.request.user.is_superuser:
+            return Transaction.objects.all()
+        return Transaction.objects.filter(user_id=self.request.user)
+    
+    def perform_create(self, serializer):
+        if self.request.user.is_superuser:
+            raise PermissionDenied(detail='Superuser cannot create any transaction')
 
 
 
 class TransactionRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
 
-    queryset = Transaction.objects.all()
-    serializer_class = TransactionSerializer
+    permission_classes = [IsOwnerOrAdmin]
 
-    def destroy(self, destroy, *args, **kwargs):
-        return Response({'message': 'You cannot delete any transaction'}, status=status.HTTP_403_FORBIDDEN)
+    queryset = Transaction.objects.all()
+    serializer_class = TransactionDetailSerializer
+
+    def perform_update(self, serializer):
+        raise PermissionDenied(detail='You cannot update any transaction')
+    
+    def perform_destroy(self, serializer):
+        raise PermissionDenied(detail='You cannot delete any transaction')
     
 
 

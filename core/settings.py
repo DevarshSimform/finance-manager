@@ -164,7 +164,7 @@ SIMPLE_JWT = {
         minutes=int(os.getenv('REFRESH_TOKEN_LIFETIME_MIN'))
     ),
     'ROTATE_REFRESH_TOKENS': os.getenv('ROTATE_REFRESH_TOKENS'),  # Generates a new refresh token when used
-    'BLACKLIST_AFTER_ROTATION': os.getenv('BLACKLIST_AFTER_AFTER_ROTATION'),  # Blacklist old refresh tokens
+    'BLACKLIST_AFTER_ROTATION': os.getenv('BLACKLIST_AFTER_ROTATION'),  # Blacklist old refresh tokens
     'AUTH_HEADER_TYPES': ('Bearer',),  # Token prefix
 }
 
