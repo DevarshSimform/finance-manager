@@ -2,6 +2,7 @@ import secrets, json
 from redis import Redis
 from django.conf import settings
 from django.core.mail import EmailMessage
+from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.contrib.auth.hashers import make_password
 
@@ -29,32 +30,34 @@ class RegisterAPIView(APIView):
             data = serializer.validated_data
             token = secrets.token_urlsafe(32)
 
-            # encrypt password before saving into redis
-            redis_data = {
-                "username": data["username"],
-                "email": data["email"],
-                "password": encrypt_password(data["password"]),  
-            }
+            # Create user with is_active = False
+            user = CustomUser.objects.create_user(
+                username=data["username"],
+                email=data["email"],
+                password=data["password"],
+                is_active=False
+            )
 
-            redis_client.setex(f"verify:{token}", 180, json.dumps(redis_data))  # 2 min
+            # Store token in Redis via Django cache, mapped to email
+            cache.set(f"verify:{token}", user.email, timeout=180)  # 2 mins
 
             verification_url = f"http://localhost:8000/api/verify-email/?token={token}"
             html_content = render_to_string("authentication/regstration_email.html", {
-                "username": data["username"],
+                "username": user.username,
                 "verification_url": verification_url
             })
 
             email = EmailMessage(
-                subject="Welcome! Verify Your Email",
+                subject="Verify Your Email",
                 body=html_content,
                 from_email=settings.EMAIL_HOST_USER,
-                to=[data["email"]],
+                to=[user.email],
             )
             email.content_subtype = "html"
             email.send()
 
-            return Response({"message": "Check your email to verify your account."}, status=status.HTTP_201_CREATED)
-        
+            return Response({"message": "User created. Check your email to verify your account."}, status=status.HTTP_201_CREATED)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -66,27 +69,25 @@ class VerifyEmailAPIView(APIView):
         if not token:
             return Response({"error": "Token is required"}, status=400)
 
-        redis_key = f"verify:{token}"
-        user_data_json = redis_client.get(redis_key)
-
-        if not user_data_json:
+        email = cache.get(f"verify:{token}")
+        if not email:
             return Response({"error": "Invalid or expired token"}, status=400)
 
-        user_data = json.loads(user_data_json)
+        try:
+            user = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
 
-        if CustomUser.objects.filter(email=user_data["email"]).exists():
-            return Response({"error": "User already registered."}, status=400)
+        if user.is_active:
+            return Response({"message": "User already verified."})
 
-        # Decrypt password after get encrypted_passwrod from redis
-        user = CustomUser.objects.create_user(
-            username=user_data["username"],
-            email=user_data["email"],
-            password=decrypt_password(user_data["password"]),
-        )
+        user.is_active = True
+        user.save()
 
-        # After user created successfully, deleting user-data from redis
-        redis_client.delete(redis_key)
-        return Response({"message": "Email verified. Account created successfully!"})
+
+        cache.delete(f"verify:{token}")
+
+        return Response({"message": "Email verified. Account activated successfully!"})
 
 
 
