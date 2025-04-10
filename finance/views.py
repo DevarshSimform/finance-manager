@@ -9,8 +9,8 @@ from finance.custompermissions import HasObjectPermOrAdmin, IsOwnerOrAdmin
 
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListAPIView, CreateAPIView
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListCreateAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied
 
@@ -18,7 +18,7 @@ from guardian.shortcuts import assign_perm, get_objects_for_user, ObjectPermissi
 
 
 
-class CategoryListAPIView(ListAPIView):
+class CategoryListCreateAPIView(ListCreateAPIView):
     
     permission_classes = [HasObjectPermOrAdmin]
     serializer_class = CategorySerializer
@@ -29,18 +29,7 @@ class CategoryListAPIView(ListAPIView):
         if self.request.user.is_superuser:
             return Category.objects.all()
         return get_objects_for_user(self.request.user, 'view_category', Category)
-
-
-
-class CategoryCreateAPIView(APIView):
-
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        categories = Category.objects.all()
-        serializer = CategorySerializer(categories, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
+    
     def post(self, request):
         serializer = CategorySerializer(data=request.data)
         if serializer.is_valid():
