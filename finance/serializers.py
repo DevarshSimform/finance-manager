@@ -109,28 +109,31 @@ class TransactionSerializer(serializers.ModelSerializer):
         model = Transaction
         fields = ['id', 'user_email', 'category_id', 'category_name', 'amount', 'type', 'description']
 
-    # def validate_amount(self, value):
-    #     '''
-    #         Ensure amount is positive before (It will convert to negative for expense).
-    #     '''
-    #     if value <= 0:
-    #         raise ValidationError("Amount must be positive")
-    #     return value
+    def validate_amount(self, value):
+        '''
+            Ensure amount is positive before (It will convert to negative for expense).
+        '''
+        if value <= 0:
+            raise ValidationError("Amount must be positive")
+        return value
     
     def validate(self, data):
         '''
-            converts expense to negative value and inclome to positive value
+            converts expense to negative value and income to positive value
         '''
-        print(data)
         type = data.get('type')
         amount = data.get('amount')
-        print(amount)
         if type == Transaction.EXPENSE and amount > 0:
             data['amount'] = -amount
         elif type == Transaction.INCOME and amount < 0:
             data['amount'] = abs(amount)
 
         return data
+    
+    def validate_description(self, value):
+        if value and (len(value) < 3 or len(value) > 255):
+            raise serializers.ValidationError("Description must be between 3 and 255 characters.")
+        return value
     
     def create(self, validated_data):
         # Automatically set the user to request.user

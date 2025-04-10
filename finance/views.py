@@ -60,42 +60,6 @@ class CategoryRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        try:
-            category = Category.objects.get(id=request.data.get('id'))
-            group = Group.objects.get(name='default_categories')
-            checker = ObjectPermissionChecker(group)
-            serializer = CategorySerializer(instance=category, data=request.data, partial=partial)
-            if serializer.is_valid():
-                if request.user.has_perm('finance.view_category', category) and not checker.has_perm('view_category', category):
-                    serializer.save()
-                    return Response({'message': 'Category Updated', 'updated_category': serializer.data}, status=status.HTTP_200_OK)
-                else:
-                    return Response({'message': 'You cannot update this category'}, status=status.HTTP_403_FORBIDDEN)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except:
-            return Response({'message': 'Category or Group does not exists'}, status=status.HTTP_404_NOT_FOUND)
-
-
-    def partial_update(self, request, *args, **kwargs):
-        kwargs['partial'] = True
-        return self.update(request, *args, **kwargs)
-
-
-    def destroy(self, request, *args, **kwargs):
-        try:
-            category = Category.objects.get(id=request.data.get('id'))
-            group = Group.objects.get(name='default_categories')
-            checker = ObjectPermissionChecker(group)
-            if request.user.has_perm('finance.view_category', category) and not checker.has_perm('view_category', category):
-                category.delete()
-                return Response({'message': 'Category deleted'}, status=status.HTTP_200_OK)
-            else:
-                return Response({'message': 'You cannot delete this category'}, status=status.HTTP_403_FORBIDDEN)
-        except:
-            return Response({'message': 'Category or Group does not exists'}, status=status.HTTP_404_NOT_FOUND)
-
 
 
 class TransactionListCreateAPIView(ListCreateAPIView):
