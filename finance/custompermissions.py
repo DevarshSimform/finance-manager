@@ -10,7 +10,17 @@ class HasObjectPermOrAdmin(BasePermission):
     """
     
     def has_object_permission(self, request, view, obj):
-        return request.user.has_perm('finance.view_category', obj) or request.user.is_superuser
+        if request.method == 'GET':
+            return request.user.has_perm('finance.view_category', obj) or request.user.is_superuser
+        else:
+            group = Group.objects.get(name='default_categories')
+            checker = ObjectPermissionChecker(group)
+            if request.user.has_perm('finance.view_category', obj) and not checker.has_perm('view_category', obj):
+                return True
+            else:
+                if request.user.is_superuser:
+                    return True
+                return False
     
 
 class IsOwnerOrAdmin(BasePermission):

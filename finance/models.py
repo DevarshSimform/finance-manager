@@ -4,7 +4,7 @@ from finance.utils import DateTimeMixin
 from django.contrib.auth.models import AbstractUser
 from django.utils.timezone import now
 from django.contrib.auth.models import UserManager 
-
+from django.core.exceptions import ValidationError
 
 
 class CustomSoftDeleteManager(UserManager, models.Manager):
@@ -88,9 +88,12 @@ class Transaction(DateTimeMixin):
     '''
         Transactions table has all transactions, soft-delete implemented. Every transaction has user_id and category_id. amount is stored as per transaction type.
     '''
+    def get_other_category():
+        return Category.objects.get_or_create(name='other')[0]
+    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='transactions')
-    category_id = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='has')
+    category_id = models.ForeignKey(Category, on_delete=models.SET(get_other_category), related_name='has', default='other')
 
     INCOME = 'income'
     EXPENSE = 'expense'
@@ -108,7 +111,6 @@ class Transaction(DateTimeMixin):
 
     def __str__(self):
         return f"{self.type} - {self.amount}"
-
 
     def save(self, *args, **kwargs):
         '''
@@ -138,6 +140,11 @@ class Transaction(DateTimeMixin):
         self.is_deleted = False
         self.save(update_fields=['is_deleted'])
 
+    def validate_description(self, value):
+        if value and (len(value) < 3 or len(value) > 255):
+            raise ValidationError("Description must be between 3 and 255 characters.")
+        return value
+
     # @classmethod
     # def get_user_balance(cls, user_id):
     #     '''
@@ -145,3 +152,5 @@ class Transaction(DateTimeMixin):
     #     '''
     #     total_amount = cls.objects.filter(user_id=user_id, is_deleted=False).aggregate(total=models.Sum('amount'))['total']
     #     return total_amount or 0  
+
+    
