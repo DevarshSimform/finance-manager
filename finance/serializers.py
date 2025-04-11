@@ -1,7 +1,10 @@
 import re
 from django.contrib.auth import authenticate
+from django.utils import timezone
+from django.core.cache import cache
 
 from finance.models import CustomUser, Category, Transaction
+from finance.tasks import send_transaction_limit_reached_email
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -136,8 +139,29 @@ class TransactionSerializer(serializers.ModelSerializer):
         return value
     
     def create(self, validated_data):
-        # Automatically set the user to request.user
-        validated_data['user_id'] = self.context['request'].user
+        user = self.context['request'].user
+        now = timezone.localtime()
+        start_of_day = now.replace(hour=0, minute=0, second=0)
+        end_of_day = now.replace(hour=23, minute=59, second=59)
+
+        txn_count_today = Transaction.objects.filter(
+            user_id=user,
+            created_at__range=(start_of_day, end_of_day),
+            is_deleted=False
+        ).count()
+        timediff_of_day = end_of_day - start_of_day
+        timediff_till_now = timezone.localtime() - start_of_day
+    
+        if txn_count_today >= 3 and abs(validated_data['amount']) > 10000:
+            # Avoid repeated email notification
+            cache_key = f"txn_limit_email_sent:{user.id}:{now.date()}"
+            if not cache.get(cache_key):
+                send_transaction_limit_reached_email.delay(user.id)
+                cache.set(cache_key, True, timeout=(timediff_of_day.seconds - timediff_till_now.seconds))  # Data deleted at EOD
+                print(timediff_of_day.seconds - timediff_till_now.seconds)
+            raise ValidationError("You have reached the daily transaction limit of 3.")
+
+        validated_data['user_id'] = user
         return super().create(validated_data)
     
     def update(self, instance, validated_data):
