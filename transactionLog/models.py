@@ -7,6 +7,7 @@ class TransactionLog(models.Model):
     ACTION_CHOICES = [
         ('created', 'Created'),
         ('updated', 'Updated'),
+        ('deleted', 'Deleted'),
     ]
 
     id = models.AutoField(primary_key=True)  # Auto-increment log entry ID

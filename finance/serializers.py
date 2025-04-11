@@ -4,7 +4,6 @@ from django.utils import timezone
 from django.core.cache import cache
 
 from finance.models import CustomUser, Category, Transaction
-from finance.tasks import send_transaction_limit_reached_email
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken

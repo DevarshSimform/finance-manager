@@ -15,10 +15,11 @@ class TransactionLogMiddleware:
         transaction_id = None
 
         # Capture request data early
-        if request.method in ['POST', 'PUT', 'PATCH'] and request.path.startswith('/api/v1/transactions'):
+        if request.method in ['POST', 'PUT', 'PATCH', 'DELETE'] and request.path.startswith('/api/v1/transactions'):
             try:
-                saved_data = json.loads(request.body.decode('utf-8'))
-                if request.method in ['PUT', 'PATCH']:
+                # if request.method != 'DELETE':
+                #     saved_data = json.loads(request.body.decode('utf-8'))
+                if request.method in ['PUT', 'PATCH', 'DELETE']:
                     # Try to extract UUID from URL
                     transaction_id = request.path.rstrip('/').split('/')[-1]
                     transaction_id = UUID(transaction_id)
@@ -30,8 +31,14 @@ class TransactionLogMiddleware:
 
         # After view logic
         try:
-            if saved_data and request.user.is_authenticated and response.status_code in [200, 201]:
+            if request.user.is_authenticated and response.status_code in [200, 201]:
                 action = 'created' if request.method == 'POST' else 'updated'
+                if request.method == 'POST':
+                    action = 'created'
+                elif request.method == 'DELETE':
+                    action = 'deleted'
+                else:
+                    action = 'updated'
 
                 # For POST, get transaction ID from response
                 if request.method == 'POST':

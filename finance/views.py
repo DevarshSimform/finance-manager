@@ -91,8 +91,8 @@ class TransactionRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
             return TransactionDetailSerializer
         return TransactionSerializer
 
-    def perform_destroy(self, serializer):
-        raise PermissionDenied(detail='You cannot delete any transaction')
+    # def perform_destroy(self, serializer):
+    #     raise PermissionDenied(detail='You cannot delete any transaction')
     
     def get_throttles(self):
         if self.request.method.lower() == 'get':
