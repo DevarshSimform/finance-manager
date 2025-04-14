@@ -15,4 +15,8 @@ urlpatterns = [
 
     path('profile/', views.UserProfileView.as_view()),
 
+    path('forgot-password/', views.RequestPasswordReset.as_view()),
+    path('reset-password/<str:token>/', views.ResetPassowrd.as_view()),
+
+
 ]

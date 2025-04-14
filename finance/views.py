@@ -1,16 +1,32 @@
 import redis,time
 
+from django.conf import settings
+from django.core.mail import EmailMessage
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.models import Group
-from finance.models import Transaction, Category, CustomUser
-from finance.serializers import CategorySerializer, TransactionSerializer, TransactionDetailSerializer, UserDetailSerializer
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from finance.models import Transaction, Category, CustomUser, PasswordReset
+from finance.serializers import (
+    CategorySerializer, 
+    TransactionSerializer, 
+    TransactionDetailSerializer, 
+    UserDetailSerializer, 
+    ResetPasswordRequestSerializer,
+    ResetPasswordSerializer
+)
 from finance.signals import post_save_with_request
 from finance.custompermissions import HasObjectPermOrAdmin, IsOwnerOrAdmin
 
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListCreateAPIView, RetrieveAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.generics import (
+    ListCreateAPIView, 
+    RetrieveUpdateDestroyAPIView, 
+    ListCreateAPIView, 
+    RetrieveAPIView, 
+    GenericAPIView
+)
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.throttling import ScopedRateThrottle
@@ -122,3 +138,69 @@ class BalanceViewAPIView(APIView):
         balance = request.user.balance
         return Response({'total-balance': balance} ,status=status.HTTP_200_OK)
     
+
+
+class RequestPasswordReset(GenericAPIView):
+
+    permission_classes = [AllowAny]
+    serializer_class = ResetPasswordRequestSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        to_email = request.data['email']
+        user = CustomUser.objects.filter(email__iexact=to_email).first()
+
+        if user:
+            token_generator = PasswordResetTokenGenerator()
+            token = token_generator.make_token(user)
+            reset = PasswordReset(email=to_email, token=token)
+            reset.save()
+
+            reset_url = f"http://localhost:8000/api/v1/reset-password/{token}"
+
+            email = EmailMessage(
+                subject="Verify Your Email",
+                body=reset_url,
+                from_email=settings.EMAIL_HOST_USER,
+                to=[to_email],
+            )
+            # email.content_subtype = "html"
+            email.send()
+
+            return Response({'success': 'Check your email to reset password'}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "User with credentials not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+
+
+class ResetPassowrd(GenericAPIView):
+    
+    permission_classes = []
+    serializer_class = ResetPasswordSerializer
+
+    def post(self, request, token):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        new_passowrd = data['new_password']
+        confirm_password = data['confirm_password']
+
+        if new_passowrd != confirm_password:
+            return Response({"error": "Passwords do not match"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        reset_obj = PasswordReset.objects.filter(token=token).first()
+
+        if not reset_obj:
+            return Response({'error':'Invalid token error'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = CustomUser.objects.filter(email=reset_obj.email).first()
+
+        if user:
+            user.set_password(request.data['new_password'])
+            user.save()
+            print(f'deleting - {reset_obj}')
+            reset_obj.delete()
+            return Response({'success':'Password updated'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'No user found'}, status=status.HTTP_404_NOT_FOUND)

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from finance.models import CustomUser, Category, Transaction
+from finance.models import CustomUser, Category, Transaction, PasswordReset
 from guardian.admin import GuardedModelAdmin
 
 
@@ -43,3 +43,9 @@ class CategoryAdmin(GuardedModelAdmin):
 class TransactionAdmin(admin.ModelAdmin):
     model = Transaction
     list_display = ['id', 'user_id', 'category_id', 'type', 'amount', 'description']
+
+
+@admin.register(PasswordReset)
+class PasswordResetAdmin(admin.ModelAdmin):
+    model = PasswordReset
+    list_display = ['id', 'email', 'token', 'created_at']
