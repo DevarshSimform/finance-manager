@@ -34,6 +34,12 @@ from rest_framework.throttling import ScopedRateThrottle
 from guardian.shortcuts import assign_perm, get_objects_for_user, ObjectPermissionChecker
 
 
+from django.contrib.auth.views import (
+PasswordResetView, PasswordResetDoneView,
+PasswordResetConfirmView, PasswordResetCompleteView
+)
+
+
 class UserProfileView(RetrieveAPIView):
 
     permission_classes = [IsAuthenticated]
@@ -143,6 +149,8 @@ class BalanceViewAPIView(APIView):
 class RequestPasswordReset(GenericAPIView):
 
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_Scope = 'low'
     serializer_class = ResetPasswordRequestSerializer
 
     def post(self, request):
