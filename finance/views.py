@@ -49,11 +49,12 @@ class CategoryRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
-
+from rest_framework.throttling import ScopedRateThrottle
 
 class TransactionListCreateAPIView(ListCreateAPIView):
 
     permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
 
     # queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
@@ -67,6 +68,13 @@ class TransactionListCreateAPIView(ListCreateAPIView):
         if self.request.user.is_superuser:
             raise PermissionDenied(detail='Superuser cannot create any transaction')
         return super().perform_create(serializer)
+    
+    def get_throttles(self):
+        if self.request.method.lower() == 'get':
+            self.throttle_scope = 'high'
+        else:
+            self.throttle_Scope = 'low'
+        return super(TransactionListCreateAPIView, self).get_throttles()
         
 
 
@@ -74,6 +82,7 @@ class TransactionRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     '''' Deletion of transaction is disabled and description can only be updated '''
 
     permission_classes = [IsOwnerOrAdmin]
+    throttle_classes = [ScopedRateThrottle]
 
     queryset = Transaction.objects.all()
     
@@ -82,8 +91,15 @@ class TransactionRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
             return TransactionDetailSerializer
         return TransactionSerializer
 
-    def perform_destroy(self, serializer):
-        raise PermissionDenied(detail='You cannot delete any transaction')
+    # def perform_destroy(self, serializer):
+    #     raise PermissionDenied(detail='You cannot delete any transaction')
+    
+    def get_throttles(self):
+        if self.request.method.lower() == 'get':
+            self.throttle_scope = 'high'
+        else:
+            self.throttle_scope = 'low'
+        return super(TransactionRetrieveUpdateDestroyAPIView, self).get_throttles()
     
 
 

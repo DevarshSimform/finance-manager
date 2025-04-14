@@ -13,3 +13,4 @@ def cleanup_expired_tokens():
     expired_tokens.delete()
 
     return f"Deleted {count} expired tokens"
+

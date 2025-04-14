@@ -1,5 +1,7 @@
 import re
 from django.contrib.auth import authenticate
+from django.utils import timezone
+from django.core.cache import cache
 
 from finance.models import CustomUser, Category, Transaction
 from rest_framework import serializers
@@ -137,7 +139,8 @@ class TransactionSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         # Automatically set the user to request.user
-        validated_data['user_id'] = self.context['request'].user
+        user = self.context['request'].user
+        validated_data['user_id'] = user
         return super().create(validated_data)
     
     def update(self, instance, validated_data):
