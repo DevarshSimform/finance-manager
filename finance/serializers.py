@@ -32,7 +32,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
     current_balance = serializers.ReadOnlyField(source='balance')
     class Meta:
         model = CustomUser
-        fields = ['id', 'username', 'email', 'current_balance', 'is_active', 'date_joined']
+        fields = ['id', 'username', 'email', 'current_balance', 'is_active', 'date_joined'] 
 
     
 

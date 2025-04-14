@@ -13,5 +13,6 @@ urlpatterns = [
     path('category/', views.CategoryListCreateAPIView.as_view()),
     path('category/<uuid:pk>/', views.CategoryRetrieveUpdateDestroyAPIView.as_view()),
 
+    path('profile/', views.UserProfileView.as_view()),
 
 ]

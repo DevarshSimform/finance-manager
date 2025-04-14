@@ -2,19 +2,29 @@ import redis,time
 
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.models import Group
-from finance.models import Transaction, Category
-from finance.serializers import CategorySerializer, TransactionSerializer, TransactionDetailSerializer
+from finance.models import Transaction, Category, CustomUser
+from finance.serializers import CategorySerializer, TransactionSerializer, TransactionDetailSerializer, UserDetailSerializer
 from finance.signals import post_save_with_request
 from finance.custompermissions import HasObjectPermOrAdmin, IsOwnerOrAdmin
 
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListCreateAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListCreateAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.throttling import ScopedRateThrottle
 
 from guardian.shortcuts import assign_perm, get_objects_for_user, ObjectPermissionChecker
+
+
+class UserProfileView(RetrieveAPIView):
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserDetailSerializer
+
+    def get_object(self):
+        return self.request.user    
 
 
 
@@ -49,7 +59,7 @@ class CategoryRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
-from rest_framework.throttling import ScopedRateThrottle
+
 
 class TransactionListCreateAPIView(ListCreateAPIView):
 
