@@ -167,7 +167,7 @@ class RequestPasswordReset(GenericAPIView):
             reset_url = f"http://localhost:8000/api/v1/reset-password/{token}"
 
             email = EmailMessage(
-                subject="Verify Your Email",
+                subject="Reset Password",
                 body=reset_url,
                 from_email=settings.EMAIL_HOST_USER,
                 to=[to_email],
@@ -201,14 +201,44 @@ class ResetPassowrd(GenericAPIView):
 
         if not reset_obj:
             return Response({'error':'Invalid token error'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         user = CustomUser.objects.filter(email=reset_obj.email).first()
 
         if user:
             user.set_password(request.data['new_password'])
             user.save()
-            print(f'deleting - {reset_obj}')
             reset_obj.delete()
             return Response({'success':'Password updated'}, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'No user found'}, status=status.HTTP_404_NOT_FOUND)
+
+from django.db import connection
+from rest_framework.decorators import api_view, permission_classes
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_category_totals(request):
+    user_id = request.user.id
+
+    if not user_id:
+        return Response({"error": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM get_total_by_category(%s)", [user_id])
+        data = cursor.fetchall()
+
+    result = [{'category': row[0], 'total_amount': float(row[1])} for row in data]
+    return Response(result)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def log_transaction_detail_with_date(request):
+    user_id = request.user.id
+
+    if not user_id:
+        return Response({"error": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    with connection.cursor() as cursor:
+        cursor.execute("CALL log_transaction_dates(%s)", [user_id])
+
+    return Response({'message': 'success'})
