@@ -1,5 +1,6 @@
 import redis,time
 
+from django.db import connection
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.shortcuts import render, get_object_or_404
@@ -18,6 +19,7 @@ from finance.signals import post_save_with_request
 from finance.custompermissions import HasObjectPermOrAdmin, IsOwnerOrAdmin
 
 from rest_framework import status
+from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 from rest_framework.generics import (
     ListCreateAPIView, 
@@ -32,7 +34,6 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.throttling import ScopedRateThrottle
 
 from guardian.shortcuts import assign_perm, get_objects_for_user, ObjectPermissionChecker
-
 
 from django.contrib.auth.views import (
 PasswordResetView, PasswordResetDoneView,
@@ -54,7 +55,9 @@ class CategoryListCreateAPIView(ListCreateAPIView):
     
     permission_classes = [HasObjectPermOrAdmin]
     serializer_class = CategorySerializer
-    # queryset = Category.objects.all()
+    throttle_classes = [ScopedRateThrottle]
+    filter_backends = [SearchFilter]
+    search_fields = ['name']
 
     def get_queryset(self):
         ''' It will return queryset of category objects which is accessible by request.user '''
@@ -71,6 +74,13 @@ class CategoryListCreateAPIView(ListCreateAPIView):
             post_save_with_request.send(sender=Category, instance=category, request=request, created=True, is_superuser=request.user.is_superuser)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def get_throttles(self):
+        if self.request.method == 'GET':
+            self.throttle_scope = 'high'
+        else:
+            self.throttle_Scope = 'low'
+        return super(CategoryListCreateAPIView, self).get_throttles()
 
         
 
@@ -86,10 +96,10 @@ class CategoryRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
 class TransactionListCreateAPIView(ListCreateAPIView):
 
     permission_classes = [IsAuthenticated]
-    throttle_classes = [ScopedRateThrottle]
-
-    # queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
+    throttle_classes = [ScopedRateThrottle]
+    filter_backends = [SearchFilter]
+    search_fields = ['description', 'amount', 'type']
 
     def get_queryset(self):
         if self.request.user.is_superuser:
@@ -102,7 +112,7 @@ class TransactionListCreateAPIView(ListCreateAPIView):
         return super().perform_create(serializer)
     
     def get_throttles(self):
-        if self.request.method.lower() == 'get':
+        if self.request.method == 'GET':
             self.throttle_scope = 'high'
         else:
             self.throttle_Scope = 'low'
@@ -212,58 +222,34 @@ class ResetPassowrd(GenericAPIView):
         else:
             return Response({'error': 'No user found'}, status=status.HTTP_404_NOT_FOUND)
 
-from django.db import connection
-from rest_framework.decorators import api_view, permission_classes
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_category_totals(request):
-    user_id = request.user.id
+class GetCategoryTotal(APIView):
+    permission_classes = [IsAuthenticated]
 
-    if not user_id:
-        return Response({"error": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST)
-
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM get_total_by_category(%s)", [user_id])
-        data = cursor.fetchall()
-
-    result = [{'category': row[0], 'total_amount': float(row[1])} for row in data]
-    return Response(result)
-
-# @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
-# def log_transaction_detail_with_date(request):
-#     user_id = request.user.id
-
-#     if not user_id:
-#         return Response({"error": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST)
-
-#     with connection.cursor() as cursor:
-#         # 1. Call the procedure (logs data into a table)
-#         cursor.execute("CALL log_transaction_dates(%s)", [user_id])
-
-#         # 2. Fetch the result
-#         # cursor.execute("SELECT * FROM temp_transaction_log")
-#         rows = cursor.fetchall()
-
-#         # 3. Optionally get column names
-#         columns = [col[0] for col in cursor.description]
-    
-#     # 4. Convert to dict list for JSON response
-#     result = [dict(zip(columns, row)) for row in rows]
-    
-#     return Response(result, status=status.HTTP_200_OK)
-
-class TransactionDetailByDate(APIView):
     def get(self, request):
         user_id = request.user.id
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM get_total_by_category(%s)", [user_id])
+                data = cursor.fetchall()
 
+            result = [{'category': row[0], 'total_amount': float(row[1])} for row in data]
+            return Response(result)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+class TransactionDetailByDate(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user_id = request.user.id
         try:
             with connection.cursor() as cursor:
                 cursor.execute("SELECT * FROM get_transaction_details_by_date(%s)", [user_id])
                 columns = [col[0] for col in cursor.description]
                 rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
             return Response(rows, status=status.HTTP_200_OK)
-
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
