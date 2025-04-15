@@ -32,7 +32,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
     current_balance = serializers.ReadOnlyField(source='balance')
     class Meta:
         model = CustomUser
-        fields = ['id', 'username', 'email', 'current_balance', 'is_active', 'date_joined']
+        fields = ['id', 'username', 'email', 'current_balance', 'is_active', 'date_joined'] 
 
     
 
@@ -173,3 +173,17 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = ['id', 'user_id', 'category_id', 'amount', 'type', 'description', 'user_info', 'category_info', 'created_at', 'updated_at']
+
+
+
+class ResetPasswordRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    new_password = serializers.RegexField(
+        regex=r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$',
+        write_only=True,
+        error_messages={'invalid': ('Password must be at least 8 characters long with at least one capital letter and symbol')})
+    confirm_password = serializers.CharField(write_only=True, required=True)

@@ -1,10 +1,9 @@
-import secrets, json
+import secrets
 from redis import Redis
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.core.cache import cache
 from django.template.loader import render_to_string
-from django.contrib.auth.hashers import make_password
 
 from rest_framework import status
 from rest_framework.views import APIView
@@ -15,7 +14,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from finance.serializers import RegisterSerializer, LoginSerializer
 from finance.models import CustomUser
-from authentication.utils import encrypt_password, decrypt_password
 
 
 redis_client = Redis()
@@ -39,7 +37,7 @@ class RegisterAPIView(APIView):
             )
 
             # Store token in Redis via Django cache, mapped to email
-            cache.set(f"verify:{token}", user.email, timeout=180)  # 2 mins
+            cache.set(f"verify:{token}", user.email, timeout=180)  # 3 mins
 
             verification_url = f"http://localhost:8000/api/verify-email/?token={token}"
             html_content = render_to_string("authentication/regstration_email.html", {
@@ -56,7 +54,7 @@ class RegisterAPIView(APIView):
             email.content_subtype = "html"
             email.send()
 
-            return Response({"message": "User created. Check your email to verify your account."}, status=status.HTTP_201_CREATED)
+            return Response({"message": "User created. Check your email to verify your account.", "warning": "Token is expiring in 3 minutes"}, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -71,7 +69,10 @@ class VerifyEmailAPIView(APIView):
 
         email = cache.get(f"verify:{token}")
         if not email:
-            return Response({"error": "Invalid or expired token"}, status=400)
+            user = CustomUser.objects.filter(is_active=False).first()
+            if user:
+                user.delete(hard=True)
+            return Response({"error": "Invalid or expired token, Register user again"}, status=400)
 
         try:
             user = CustomUser.objects.get(email=email)

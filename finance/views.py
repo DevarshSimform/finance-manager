@@ -1,20 +1,53 @@
 import redis,time
 
+from django.db import connection
+from django.conf import settings
+from django.core.mail import EmailMessage
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.models import Group
-from finance.models import Transaction, Category
-from finance.serializers import CategorySerializer, TransactionSerializer, TransactionDetailSerializer
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from finance.models import Transaction, Category, CustomUser, PasswordReset
+from finance.serializers import (
+    CategorySerializer, 
+    TransactionSerializer, 
+    TransactionDetailSerializer, 
+    UserDetailSerializer, 
+    ResetPasswordRequestSerializer,
+    ResetPasswordSerializer
+)
 from finance.signals import post_save_with_request
 from finance.custompermissions import HasObjectPermOrAdmin, IsOwnerOrAdmin
 
 from rest_framework import status
+from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListCreateAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.generics import (
+    ListCreateAPIView, 
+    RetrieveUpdateDestroyAPIView, 
+    ListCreateAPIView, 
+    RetrieveAPIView, 
+    GenericAPIView
+)
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.throttling import ScopedRateThrottle
 
 from guardian.shortcuts import assign_perm, get_objects_for_user, ObjectPermissionChecker
+
+from django.contrib.auth.views import (
+PasswordResetView, PasswordResetDoneView,
+PasswordResetConfirmView, PasswordResetCompleteView
+)
+
+
+class UserProfileView(RetrieveAPIView):
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserDetailSerializer
+
+    def get_object(self):
+        return self.request.user    
 
 
 
@@ -22,7 +55,9 @@ class CategoryListCreateAPIView(ListCreateAPIView):
     
     permission_classes = [HasObjectPermOrAdmin]
     serializer_class = CategorySerializer
-    # queryset = Category.objects.all()
+    throttle_classes = [ScopedRateThrottle]
+    filter_backends = [SearchFilter]
+    search_fields = ['name']
 
     def get_queryset(self):
         ''' It will return queryset of category objects which is accessible by request.user '''
@@ -39,6 +74,13 @@ class CategoryListCreateAPIView(ListCreateAPIView):
             post_save_with_request.send(sender=Category, instance=category, request=request, created=True, is_superuser=request.user.is_superuser)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def get_throttles(self):
+        if self.request.method == 'GET':
+            self.throttle_scope = 'high'
+        else:
+            self.throttle_Scope = 'low'
+        return super(CategoryListCreateAPIView, self).get_throttles()
 
         
 
@@ -49,15 +91,15 @@ class CategoryRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
-from rest_framework.throttling import ScopedRateThrottle
+
 
 class TransactionListCreateAPIView(ListCreateAPIView):
 
     permission_classes = [IsAuthenticated]
-    throttle_classes = [ScopedRateThrottle]
-
-    # queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
+    throttle_classes = [ScopedRateThrottle]
+    filter_backends = [SearchFilter]
+    search_fields = ['description', 'amount', 'type']
 
     def get_queryset(self):
         if self.request.user.is_superuser:
@@ -70,7 +112,7 @@ class TransactionListCreateAPIView(ListCreateAPIView):
         return super().perform_create(serializer)
     
     def get_throttles(self):
-        if self.request.method.lower() == 'get':
+        if self.request.method == 'GET':
             self.throttle_scope = 'high'
         else:
             self.throttle_Scope = 'low'
@@ -112,3 +154,102 @@ class BalanceViewAPIView(APIView):
         balance = request.user.balance
         return Response({'total-balance': balance} ,status=status.HTTP_200_OK)
     
+
+
+class RequestPasswordReset(GenericAPIView):
+
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_Scope = 'low'
+    serializer_class = ResetPasswordRequestSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        to_email = request.data['email']
+        user = CustomUser.objects.filter(email__iexact=to_email).first()
+
+        if user:
+            token_generator = PasswordResetTokenGenerator()
+            token = token_generator.make_token(user)
+            reset = PasswordReset(email=to_email, token=token)
+            reset.save()
+
+            reset_url = f"http://localhost:8000/api/v1/reset-password/{token}"
+
+            email = EmailMessage(
+                subject="Reset Password",
+                body=reset_url,
+                from_email=settings.EMAIL_HOST_USER,
+                to=[to_email],
+            )
+            # email.content_subtype = "html"
+            email.send()
+
+            return Response({'success': 'Check your email to reset password'}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "User with credentials not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+
+
+class ResetPassowrd(GenericAPIView):
+    
+    permission_classes = []
+    serializer_class = ResetPasswordSerializer
+
+    def post(self, request, token):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        new_passowrd = data['new_password']
+        confirm_password = data['confirm_password']
+
+        if new_passowrd != confirm_password:
+            return Response({"error": "Passwords do not match"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        reset_obj = PasswordReset.objects.filter(token=token).first()
+
+        if not reset_obj:
+            return Response({'error':'Invalid token error'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = CustomUser.objects.filter(email=reset_obj.email).first()
+
+        if user:
+            user.set_password(request.data['new_password'])
+            user.save()
+            reset_obj.delete()
+            return Response({'success':'Password updated'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'No user found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class GetCategoryTotal(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user_id = request.user.id
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM get_total_by_category(%s)", [user_id])
+                data = cursor.fetchall()
+
+            result = [{'category': row[0], 'total_amount': float(row[1])} for row in data]
+            return Response(result)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+class TransactionDetailByDate(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user_id = request.user.id
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM get_transaction_details_by_date(%s)", [user_id])
+                columns = [col[0] for col in cursor.description]
+                rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            return Response(rows, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
