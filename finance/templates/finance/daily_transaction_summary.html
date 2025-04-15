@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; color: #333; }
+        h2 { color: #4CAF50; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .summary { margin-top: 20px; }
+        .summary p { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>Hi {{ user.username }},</h2>
+
+    <p>Here's a summary of your transactions for <strong>{{ date }}</strong>:</p>
+
+    {% if transactions %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in transactions %}
+                <tr>
+                    <td>{{ txn.type|title }}</td>
+                    <td>{{ txn.amount }}</td>
+                    <td>{{ txn.description }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="summary">
+            <p>Total Income: ₹{{ total_income }}</p>
+            <p>Total Expense: ₹{{ total_expense }}</p>
+            <p>Net Balance: ₹{{ net_balance }}</p>
+        </div>
+    {% else %}
+        <p>You had no transactions yesterday.</p>
+    {% endif %}
+
+    <p style="margin-top: 30px;">Your Personal Finance App</p>
+</body>
+</html>
