@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Transaction Report</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+  <div class="container py-5">
+    <h1 class="mb-4 text-center">Category Wise Expense Report</h1>
+
+    <table class="table" id="categoryTable">
+        <thead>
+          <tr>
+            <th scope="col">Category</th>
+            <th scope="col">Total Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+    
+        </tbody>
+    </table>
+
+    <script>
+        async function fetchCategoryData() {
+        const response = await fetch('http://127.0.0.1:8000/api/v1/category-wise-expanse/', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ0NzI0MTM4LCJpYXQiOjE3NDQ3MjM4MzgsImp0aSI6IjgzZjBiMDRlMGEwODQwZGU4ODc3ZWYxOGQ2NmI0YmI3IiwidXNlcl9pZCI6MTV9.N5jxqZ4Qz5EGj-F0d8_cyCqorlzcYKnGB8wQ7VyfbLk'
+            }
+        });
+        const data = await response.json();
+        const tableBody = document.querySelector("#categoryTable tbody");
+        data.forEach(item => {
+            const row = `<tr>
+            <td>${item.category}</td>
+            <td>${item.total_amount.toFixed(2)}</td>
+            </tr>`;
+            tableBody.innerHTML += row;
+        });
+        }
+
+        window.onload = function () {
+            fetchCategoryData();
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
