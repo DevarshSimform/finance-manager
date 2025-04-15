@@ -19,5 +19,5 @@ urlpatterns = [
     path('reset-password/<str:token>/', views.ResetPassowrd.as_view()),
 
     path('total/', views.get_category_totals, name='get_category_totals'),
-    path('transaction-detail/', views.log_transaction_detail_with_date, name='transaction_detials')
+    path('transaction-detail/', views.TransactionDetailByDate.as_view(), name='transaction_detials')
 ]

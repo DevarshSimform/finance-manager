@@ -230,15 +230,40 @@ def get_category_totals(request):
     result = [{'category': row[0], 'total_amount': float(row[1])} for row in data]
     return Response(result)
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def log_transaction_detail_with_date(request):
-    user_id = request.user.id
+# @api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+# def log_transaction_detail_with_date(request):
+#     user_id = request.user.id
 
-    if not user_id:
-        return Response({"error": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+#     if not user_id:
+#         return Response({"error": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+#     with connection.cursor() as cursor:
+#         # 1. Call the procedure (logs data into a table)
+#         cursor.execute("CALL log_transaction_dates(%s)", [user_id])
+
+#         # 2. Fetch the result
+#         # cursor.execute("SELECT * FROM temp_transaction_log")
+#         rows = cursor.fetchall()
+
+#         # 3. Optionally get column names
+#         columns = [col[0] for col in cursor.description]
     
-    with connection.cursor() as cursor:
-        cursor.execute("CALL log_transaction_dates(%s)", [user_id])
+#     # 4. Convert to dict list for JSON response
+#     result = [dict(zip(columns, row)) for row in rows]
+    
+#     return Response(result, status=status.HTTP_200_OK)
 
-    return Response({'message': 'success'})
+class TransactionDetailByDate(APIView):
+    def get(self, request):
+        user_id = request.user.id
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM get_transaction_details_by_date(%s)", [user_id])
+                columns = [col[0] for col in cursor.description]
+                rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            return Response(rows, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
