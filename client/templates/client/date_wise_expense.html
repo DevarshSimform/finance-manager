@@ -1,0 +1,65 @@
+{% include "client/base.html" %}
+
+
+{% block content %}
+
+
+    <div class="container py-5">
+        <h1 class="mb-4 text-center">Transaction Report</h1>
+
+        <table class="table" id="transactionTable">
+            <thead>
+            <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Description</th>
+                <th scope="col">Amount</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+        </table>
+    </div>
+
+        <script>
+
+            function getCookieValue(name) {
+                const cookieString = document.cookie;
+                const cookies = cookieString.split('; ').reduce((acc, current) => {
+                    const [key, value] = current.split('=');
+                    acc[key] = value;
+                    return acc;
+                }, {});
+                return cookies[name];
+              }
+            
+
+            async function fetchTransactionData() {
+                const accessToken = getCookieValue('access_token');
+
+                const response = await fetch('http://127.0.0.1:8000/api/v1/transaction-detail/', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+                const data = await response.json();
+                const tableBody = document.querySelector("#transactionTable tbody");
+                data.forEach(item => {
+                    const row = `<tr>
+                    <td>${item.transaction_date}</td>
+                    <td>${item.category_name}</td>
+                    <td>${item.amount.toFixed(2)}</td>
+                    </tr>`;
+                    tableBody.innerHTML += row;
+                });
+            }
+
+            window.onload = function () {
+                fetchTransactionData();
+            }
+        </script>
+
+
+{% endblock %}

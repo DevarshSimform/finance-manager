@@ -1,0 +1,77 @@
+{% include "client/base.html" %}
+
+
+{% block heading %}
+
+{% endblock %}
+
+
+
+{% block content %}
+
+
+    <div class="container d-flex justify-content-center align-items-center vh-100">
+        <div class="login-container card p-4 shadow-sm">
+        <h2 class="text-center mb-4">Login</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+            <label for="email-field" class="form-label">Email address</label>
+            <input type="email" class="form-control" id="email-field" name="email" placeholder="Enter your email" required>
+            </div>
+            <div class="mb-3">
+            <label for="password-field" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password-field" name="password" placeholder="Enter your password" required>
+            </div>
+            <div class="d-grid">
+            <button type="submit" class="btn btn-primary">Login</button>
+            </div>
+            <p class="mt-3 text-center small">
+            Don't have an account? <a href="#">Register</a>
+            </p>
+        </form>
+        </div>
+    </div>
+
+    <div class="container" id="output">
+
+    </div>
+
+
+    <script>
+        async function UserLogin(event) {
+            event.preventDefault(); // Prevent form from submitting the traditional way
+
+            const email = document.getElementById("email-field").value;
+            const password = document.getElementById("password-field").value;
+
+            const response = await fetch('http://127.0.0.1:8000/api/auth/login/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Store access token in cookie (expires in 1 day)
+                document.cookie = `access_token=${data.access}; path=/; max-age=86400;`;
+                window.location.href = `http://127.0.0.1:8000/home/`; 
+            }
+        }
+
+        // Attach the login function to the form submit
+        window.onload = function () {
+            document.querySelector('form').addEventListener('submit', UserLogin);
+        };
+
+
+    </script>
+
+
+{% endblock %}

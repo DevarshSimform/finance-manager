@@ -50,6 +50,8 @@ class LoginSerializer(serializers.Serializer):
         email = data.get('email')
         password = data.get('password')
         user = authenticate(email=email, password=password)
+        user.last_login = timezone.now()
+        user.save()
         if not user:
             raise ValidationError("Invalid email or password")
         

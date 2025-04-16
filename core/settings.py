@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'authentication',
     'developersOnly',
     'transactionLog',
+    'client',
 ]
 
 REST_FRAMEWORK = {
