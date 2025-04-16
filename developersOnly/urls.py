@@ -11,7 +11,7 @@ urlpatterns = [
 
     path('users/all', views.AllUserAPIView.as_view()),
     path('users/deleted', views.DeletedUserAPIView.as_view()),
-    path('users/restore/<uuid:pk>', views.RestoreUserAPIView.as_view()),
+    path('users/restore/<int:pk>', views.RestoreUserAPIView.as_view()),
 
 
 ]

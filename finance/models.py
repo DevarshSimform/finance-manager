@@ -102,6 +102,16 @@ class Transaction(DateTimeMixin):
         (EXPENSE, 'Expense'),
     }
 
+    CASH = 'cash'
+    CARD = 'card'
+    BANK_PAYMENT = 'bank_payment'
+    SOURCE_CHOICES = {
+        (CASH, 'Cash'),
+        (CARD, 'Card'),
+        (BANK_PAYMENT, 'Bank_Payment')
+    }
+
+    source = models.CharField(max_length=12, choices=SOURCE_CHOICES, default=CASH)
     type = models.CharField(max_length=7, choices=TRANSACTION_CHOICES)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     is_deleted = models.BooleanField(default=False)

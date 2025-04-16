@@ -111,7 +111,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     category_name = serializers.StringRelatedField(source='category_id', read_only=True)
     class Meta:
         model = Transaction
-        fields = ['id', 'user_email', 'category_id', 'category_name', 'amount', 'type', 'description']
+        fields = ['id', 'user_email', 'category_id', 'category_name', 'amount', 'type', 'source', 'description']
 
     def validate_amount(self, value):
         '''
@@ -174,7 +174,7 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
     category_info = CategoryDetailSerializer(source='category_id', read_only=True)
     class Meta:
         model = Transaction
-        fields = ['id', 'user_id', 'category_id', 'amount', 'type', 'description', 'user_info', 'category_info', 'created_at', 'updated_at']
+        fields = ['id', 'user_id', 'category_id', 'amount', 'type', 'source', 'description', 'user_info', 'category_info', 'created_at', 'updated_at']
 
 
 
