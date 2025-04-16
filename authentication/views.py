@@ -36,9 +36,9 @@ class RegisterAPIView(APIView):
             )
 
             # Store token in Redis via Django cache, mapped to email
-            cache.set(f"verify:{token}", user.email, timeout=180)  # 3 mins
+            cache.set(f"verify:{token}", user.id, timeout=180)  # 3 mins
 
-            verification_url = f"http://localhost:8000/api/verify-email/?token={token}"
+            verification_url = f"http://localhost:8000/api/auth/verify-email/?token={token}"
             html_content = render_to_string("authentication/regstration_email.html", {
                 "username": user.username,
                 "verification_url": verification_url
@@ -48,7 +48,7 @@ class RegisterAPIView(APIView):
                 subject="Verify Your Email",
                 body=html_content,
                 from_email=settings.EMAIL_HOST_USER,
-                to=[user.email],
+                to=['pateldc014@gmail.com'],
             )
             email.content_subtype = "html"
             email.send()
@@ -66,18 +66,19 @@ class VerifyEmailAPIView(APIView):
 
     def get(self, request):
         token = request.GET.get("token")
+        print(token)
         if not token:
             return Response({"error": "Token is required"}, status=400)
 
-        email = cache.get(f"verify:{token}")
-        if not email:
-            user = CustomUser.objects.filter(is_active=False).first()
-            if user:
-                user.delete(hard=True)
+        user_id = cache.get(f"verify:{token}")
+        if not user_id:
+            # user = CustomUser.objects.filter(is_active=False).first()
+            # if user:
+            #     user.delete(hard=True)
             return Response({"error": "Invalid or expired token, Register user again"}, status=400)
 
         try:
-            user = CustomUser.objects.get(email=email)
+            user = CustomUser.objects.get(id=user_id)
         except CustomUser.DoesNotExist:
             return Response({"error": "User not found"}, status=404)
 

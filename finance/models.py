@@ -34,6 +34,7 @@ class CustomUser(AbstractUser):
     objects = CustomSoftDeleteManager()
 
     class Meta:
+        verbose_name = "User"
         constraints = [
             models.UniqueConstraint(
                 fields=["email", "is_active"],
