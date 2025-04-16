@@ -1,15 +1,22 @@
 from celery import shared_task
+from datetime import timedelta, date
+
 from django.conf import settings
 from django.utils import timezone
 from django.utils.html import strip_tags
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
-from finance.models import CustomUser, Transaction
-from datetime import timedelta, date
+
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
+
+from finance.models import CustomUser, Transaction
+
 
 @shared_task
 def cleanup_expired_tokens():
+    """
+    Deletes expired tokens and their related blacklisted tokens from the database.
+    """
     expired_tokens = OutstandingToken.objects.filter(expires_at__lt=timezone.now())
     count = expired_tokens.count()
 
@@ -23,6 +30,9 @@ def cleanup_expired_tokens():
 
 @shared_task
 def send_daily_transaction_email():
+    """
+    Sends a daily transaction summary email to all users (excluding 'root') with their income, expenses, and net balance for the previous day.
+    """
     yesterday = date.today() - timedelta(days=1)
     print("Sending email...")
     for user in CustomUser.objects.exclude(username='root'):

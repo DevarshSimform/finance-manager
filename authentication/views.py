@@ -1,5 +1,4 @@
 import secrets
-from redis import Redis
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.core.cache import cache
@@ -16,11 +15,11 @@ from finance.serializers import RegisterSerializer, LoginSerializer
 from finance.models import CustomUser
 
 
-redis_client = Redis()
-
-# Register user API with email verification (2FA)
 
 class RegisterAPIView(APIView):
+    """
+    Handles user registration by creating an inactive user, sending a verification email with a token, and storing the token in Redis.
+    """
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
@@ -61,6 +60,9 @@ class RegisterAPIView(APIView):
 
 
 class VerifyEmailAPIView(APIView):
+    """
+    APIView to verify user email using a token, activate the account, and handle invalid or expired tokens.
+    """
 
     def get(self, request):
         token = request.GET.get("token")
@@ -93,6 +95,9 @@ class VerifyEmailAPIView(APIView):
 
 
 class LoginAPIView(APIView):
+    """
+    Handles user login by validating credentials and returning appropriate responses.
+    """
     
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
@@ -103,6 +108,9 @@ class LoginAPIView(APIView):
 
 
 class LogoutAPIView(APIView):
+    """
+    Handles user logout by blacklisting the provided refresh token.
+    """
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -115,15 +123,3 @@ class LogoutAPIView(APIView):
             return Response({'detail': 'Refresh token blacklisted and user logged out'}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
-
-
-# Register user API without 2FA 
-# class RegisterAPIView(APIView):
-
-#     def post(self, request):
-#         serializer = RegisterSerializer(data=request.data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response({'msg': 'User Registered'}, status=status.HTTP_201_CREATED)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

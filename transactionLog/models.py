@@ -1,9 +1,11 @@
 from django.db import models
 from django.utils.timezone import now
-from finance.models import CustomUser, Category
 
 
 class TransactionLog(models.Model):
+    """
+    Model representing a log entry for transactions, including details such as user, category, amount, type, action, and timestamp.
+    """
     ACTION_CHOICES = [
         ('created', 'Created'),
         ('updated', 'Updated'),

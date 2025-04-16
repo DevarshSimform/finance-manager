@@ -1,16 +1,15 @@
 import uuid
 from django.db import models
 from finance.utils import DateTimeMixin
-from django.contrib.auth.models import AbstractUser
-from django.utils.timezone import now
-from django.contrib.auth.models import UserManager 
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 
 
 class CustomSoftDeleteManager(UserManager, models.Manager):
-    '''
-        Custom manager to filter soft delete every time. It inherits UserManager to use create_user() in CustomUser.objects.create_user()
-    '''
+    """
+    Custom manager for filtering soft-deleted objects, with methods to include or exclusively retrieve deleted objects.
+    """
     def get_queryset(self):
         return super().get_queryset().filter(is_deleted=False)
     
@@ -23,10 +22,10 @@ class CustomSoftDeleteManager(UserManager, models.Manager):
 
 
 class CustomUser(AbstractUser):
-    '''
-        here, email is username_field by-default it is username but we consider email as uesrname_field. It has soft-delete
-    '''
-    email = models.EmailField(unique=True)
+    """
+    CustomUser model extends AbstractUser, uses email as the username field, supports soft delete, and provides balance calculation and restore functionality.
+    """
+    email = models.EmailField()
     is_deleted = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
@@ -34,13 +33,22 @@ class CustomUser(AbstractUser):
 
     objects = CustomSoftDeleteManager()
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["email", "is_active"],
+                name="unique_email_activity_user",
+                condition=Q(is_active=True),
+            ),
+        ]
+
     def __str__(self):
         return self.username
     
     def delete(self, hard=False, *args, **kwargs):
-        '''
-            Override the delete method, default delete() will perform soft delete. To hard delete use delete(hard=True).
-        '''
+        """
+        Overrides the delete method to perform soft delete by default; use delete(hard=True) for hard delete.
+        """
         if hard:
             super().delete(*args, **kwargs)
         else:
@@ -48,23 +56,24 @@ class CustomUser(AbstractUser):
             self.save(update_fields=['is_deleted'])
 
     def restore(self):
-        '''
-            restore method is used to restore soft deleted transaction.
-        '''
+        """Restore method to undo soft deletion of a transaction by setting is_deleted to False."""
+
         self.is_deleted=False
         self.save(update_fields=['is_deleted'])
     
     @property
     def balance(self):
-        '''
-            here we have to fetch all transactions of user by backward relationship
-        '''
+        """Calculate and return the total balance by aggregating all user transactions."""
+
         total_amount = self.transactions.aggregate(total=models.Sum('amount'))['total']
         return total_amount or 0
     
 
 
 class Category(DateTimeMixin):
+    """
+    Category model representing a unique category with a name stored in lowercase, inheriting DateTimeMixin.
+    """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, unique=True)
 
@@ -72,9 +81,8 @@ class Category(DateTimeMixin):
         verbose_name_plural='Categories'
 
     def save(self, *args, **kwargs):
-        '''
-            Override save method to save category name into lowercase
-        '''
+        """Override save method to convert the category name to lowercase before saving."""
+    
         self.name = self.name.lower()
         super().save(*args, **kwargs)
     
@@ -85,9 +93,10 @@ class Category(DateTimeMixin):
 
 
 class Transaction(DateTimeMixin):
-    '''
-        Transactions table has all transactions, soft-delete implemented. Every transaction has user_id and category_id. amount is stored as per transaction type.
-    '''
+    """
+    Transaction model represents financial transactions with soft-delete functionality, categorized by type, source, and user, ensuring income is positive and expenses are negative.
+    """
+
     def get_other_category():
         return Category.objects.get_or_create(name='other')[0]
     
@@ -123,9 +132,10 @@ class Transaction(DateTimeMixin):
         return f"{self.type} - {self.amount}"
 
     def save(self, *args, **kwargs):
-        '''
-            Ensure that expense amount should be negative and income is positive 
-        '''
+        """
+        Overrides the save method to ensure expense amounts are negative and income amounts are positive.
+        """
+
         if self.type == self.EXPENSE and self.amount > 0:
             self.amount = -self.amount
         elif self.type == self.INCOME and self.amount < 0:
@@ -134,9 +144,10 @@ class Transaction(DateTimeMixin):
     
     
     def delete(self, hard=False, *args, **kwargs):
-        '''
-            Override the delete method, default delete() will perform soft delete. To hard delete use delete(hard=True).
-        '''
+        """
+        Override the delete method to perform soft delete by default, and hard delete when `hard=True` is passed.
+        """
+
         if hard:
             super().delete(*args, **kwargs)
         else:
@@ -144,28 +155,26 @@ class Transaction(DateTimeMixin):
             self.save(update_fields=['is_deleted'])
     
     def restore(self):
-        '''
-            restore method is used to restore soft deleted transaction.
-        '''
+        """
+        Restore a soft-deleted transaction by setting is_deleted to False and saving the change.
+        """
+
         self.is_deleted = False
         self.save(update_fields=['is_deleted'])
 
     def validate_description(self, value):
+        """Validates that the description length is between 3 and 255 characters."""
+
         if value and (len(value) < 3 or len(value) > 255):
             raise ValidationError("Description must be between 3 and 255 characters.")
         return value
 
-    # @classmethod
-    # def get_user_balance(cls, user_id):
-    #     '''
-    #         Another approach to find user's balance but It is class dependent.
-    #     '''
-    #     total_amount = cls.objects.filter(user_id=user_id, is_deleted=False).aggregate(total=models.Sum('amount'))['total']
-    #     return total_amount or 0  
-
 
 
 class PasswordReset(models.Model):
+    """
+    Model to store password reset tokens associated with user emails.
+    """
     email = models.EmailField()
     token = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)

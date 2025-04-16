@@ -1,12 +1,15 @@
 import json
 from uuid import UUID
 from django.utils.timezone import now
-from finance.models import Transaction  # Adjust import paths
+from finance.models import Transaction
 from transactionLog.models import TransactionLog
 
 
 
 class TransactionLogMiddleware:
+    """
+    Middleware to log transaction actions (create, update, delete) for authenticated users interacting with the transactions API.
+    """
     def __init__(self, get_response):
         self.get_response = get_response
 
@@ -90,4 +93,3 @@ class TransactionLogMiddleware:
 
 #     def process_response(self, request):
 #         pass
-

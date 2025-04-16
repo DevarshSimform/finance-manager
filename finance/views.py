@@ -31,26 +31,13 @@ from rest_framework.throttling import ScopedRateThrottle
 
 from guardian.shortcuts import get_objects_for_user
 
-from django.contrib.auth.views import (
-    PasswordResetView, PasswordResetDoneView,
-    PasswordResetConfirmView, PasswordResetCompleteView
-)
 
 
 class UserProfileView(RetrieveAPIView):
     """
-    API view to retrieve the details of the currently authenticated user.
-
-    This view requires the user to be authenticated and uses the `UserDetailSerializer`
-    to serialize the user data.
-
-    Attributes:
-        permission_classes (list): Specifies the permissions required to access this view.
-        serializer_class (Serializer): The serializer class used to serialize the user data.
-
-    Methods:
-        get_object(): Returns the currently authenticated user.
+    View to retrieve the authenticated user's profile details.
     """
+
     permission_classes = [IsAuthenticated]
     serializer_class = UserDetailSerializer
 
@@ -61,16 +48,7 @@ class UserProfileView(RetrieveAPIView):
 
 class CategoryListCreateAPIView(ListCreateAPIView):
     """
-    API view to list and create Category objects.
-    - Permissions: Requires `HasObjectPermOrAdmin` permission.
-    - Serializer: Uses `CategorySerializer` for validation and serialization.
-    - Throttling: Scoped rate throttling with 'high' for GET and 'low' for other methods.
-    - Filtering: Supports search by 'name' field.
-
-    Methods:
-    - get_queryset(): Returns categories accessible by the requesting user.
-    - post(request): Creates a new category and triggers a post-save signal.
-    - get_throttles(): Dynamically sets throttle scope based on request method.
+    API view for listing and creating categories with custom permissions, throttling, filtering, and signals.
     """
     
     permission_classes = [HasObjectPermOrAdmin]
@@ -106,11 +84,7 @@ class CategoryListCreateAPIView(ListCreateAPIView):
 
 class CategoryRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     """
-    API view to retrieve, update, or delete a specific Category instance.
-
-    - Requires appropriate object-level permissions or admin access.
-    - Uses `CategorySerializer` for serialization.
-    - Operates on the `Category` model.
+    API view to retrieve, update, or delete a Category instance with specific permissions.
     """
 
     permission_classes = [HasObjectPermOrAdmin]
@@ -121,28 +95,9 @@ class CategoryRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
 
 
 class TransactionListCreateAPIView(ListCreateAPIView):
-    '''This API view provides functionality for authenticated users to list and create transactions. 
-    It enforces specific permissions, throttling, and filtering rules to ensure proper access control 
-    and efficient handling of requests.
-    Attributes:
-        permission_classes (list): Specifies that only authenticated users can access this view.
-        serializer_class (TransactionSerializer): Defines the serializer used for validating and 
-            representing transaction data.
-        throttle_classes (list): Applies rate throttling to requests based on the defined scope.
-        filter_backends (list): Enables filtering of transactions using search fields.
-        search_fields (list): Specifies the fields ('description', 'amount', 'type', 'source') 
-            that can be searched.
-    Methods:
-        get_queryset():
-            Returns the queryset of transactions based on the user's role. Superusers can view all 
-            transactions, while regular users can only view their own transactions.
-        perform_create(serializer):
-            Handles the creation of a new transaction. Superusers are restricted from creating 
-            transactions and will receive a PermissionDenied error.
-        get_throttles():
-            Applies different throttle scopes based on the HTTP method. 'high' throttle scope is 
-            applied for GET requests, while 'low' throttle scope is applied for other methods.
-    '''
+    """
+    API view for listing and creating transactions with permissions, throttling, filtering, and superuser restrictions.
+    """
 
     permission_classes = [IsAuthenticated]
     serializer_class = TransactionSerializer
@@ -171,28 +126,9 @@ class TransactionListCreateAPIView(ListCreateAPIView):
 
 class TransactionRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     """
-    TransactionRetrieveUpdateDestroyAPIView is a view that allows retrieving, updating, 
-    and disabling the deletion of a transaction. It enforces permissions and throttling 
-    based on the request method.
-    Attributes:
-        permission_classes (list): Specifies the permissions required to access this view. 
-            Only the owner or an admin can access.
-        throttle_classes (list): Specifies the throttling classes to be used for rate limiting.
-        queryset (QuerySet): The base queryset for retrieving transactions.
-    Methods:
-        get_serializer_class():
-            Returns the appropriate serializer class based on the request method.
-            - GET: Uses TransactionDetailSerializer.
-            - Other methods: Uses TransactionSerializer.
-        get_throttles():
-            Configures the throttle scope based on the request method.
-            - GET: High throttle scope.
-            - Other methods: Low throttle scope.
-        Note:
-            The deletion of transactions is disabled, and attempting to delete will raise 
-            a PermissionDenied exception (commented out in the code).
+    API view for retrieving, updating, or deleting a Transaction instance with custom permissions, throttling, and serializers.
     """
-
+    
     permission_classes = [IsOwnerOrAdmin]
     throttle_classes = [ScopedRateThrottle]
 
@@ -217,11 +153,9 @@ class TransactionRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
 
 class BalanceViewAPIView(APIView):
     """
-    BalanceViewAPIView is an API view that retrieves the balance of the currently logged-in user.
-
-    This view requires the user to be authenticated and calculates the user's balance using 
-    a property function named `balance`.
+    APIView to retrieve the authenticated user's total balance using the balance property.
     """
+    
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -233,24 +167,7 @@ class BalanceViewAPIView(APIView):
 
 class RequestPasswordReset(GenericAPIView):
     """
-    API view to handle password reset requests.
-
-    This view allows users to request a password reset by providing their email address.
-    If the email corresponds to a registered user, a password reset token is generated
-    and sent to the user's email address.
-
-    Attributes:
-        permission_classes (list): Specifies the permissions required to access this view.
-                                   In this case, it allows unrestricted access.
-        throttle_classes (list): Specifies the throttling policy for this view.
-        throttle_Scope (str): Defines the scope for rate limiting.
-        serializer_class (Serializer): Serializer class used to validate the input data.
-
-    Methods:
-        post(request):
-            Handles POST requests to initiate the password reset process.
-            Validates the provided email, generates a reset token, and sends an email
-            with the reset link if the user exists.
+    Handles password reset requests by generating a token, saving it, and sending a reset email to the user.
     """
 
     permission_classes = [AllowAny]
@@ -277,7 +194,6 @@ class RequestPasswordReset(GenericAPIView):
                 from_email=settings.EMAIL_HOST_USER,
                 to=[to_email],
             )
-            # email.content_subtype = "html"
             email.send()
 
             return Response({'success': 'Check your email to reset password'}, status=status.HTTP_200_OK)
@@ -288,31 +204,7 @@ class RequestPasswordReset(GenericAPIView):
 
 class ResetPassword(GenericAPIView):
     """
-    API endpoint to reset a user's password using a token.
-    This view allows users to reset their password by providing a valid token
-    and new password details. It validates the token, ensures the new password
-    and confirmation password match, and updates the user's password if all
-    conditions are met.
-    Methods:
-        post(request, token):
-            Handles the password reset process.
-    Attributes:
-        permission_classes (list): A list of permission classes. This endpoint
-            does not require authentication.
-        serializer_class (ResetPasswordSerializer): The serializer used to
-            validate the input data.
-    POST Parameters:
-        token (str): The token used to validate the password reset request.
-        new_password (str): The new password for the user.
-        confirm_password (str): Confirmation of the new password.
-    Responses:
-        200 OK:
-            - Password updated successfully.
-        400 Bad Request:
-            - Passwords do not match.
-            - Invalid token error.
-        404 Not Found:
-            - No user found with the provided email.
+    Handles password reset by validating the token, updating the user's password, and deleting the reset token.
     """
     
     permission_classes = []
@@ -347,26 +239,9 @@ class ResetPassword(GenericAPIView):
 
 class GetCategoryTotal(APIView):
     """
-    API view to retrieve the total amount grouped by category for the authenticated user.
-
-    This view uses a raw SQL query to fetch data from the database by calling the 
-    `get_total_by_category` function with the user's ID as a parameter.
-
-    Methods:
-        get(request):
-            Handles GET requests to retrieve the total amount grouped by category.
-
-    Attributes:
-        permission_classes (list): Specifies that the view requires the user to be authenticated.
-
-    Raises:
-        Exception: If any error occurs during the database query execution, it returns a 500 
-        Internal Server Error response with the error message.
-
-    Returns:
-        Response: A JSON response containing a list of dictionaries with `category` and 
-        `total_amount` keys, or an error message in case of failure.
+    APIView to retrieve total amounts grouped by category for the authenticated user.
     """
+    
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -385,24 +260,9 @@ class GetCategoryTotal(APIView):
 
 class TransactionDetailByDate(APIView):
     """
-    APIView to retrieve transaction details by date for the authenticated user.
-
-    This view uses a raw SQL query to fetch transaction details from the database
-    by invoking a stored procedure `get_transaction_details_by_date`. The stored
-    procedure is expected to return transaction details for the given user ID.
-
-    Methods:
-        get(request):
-            Handles GET requests to retrieve transaction details for the authenticated user.
-
-    Attributes:
-        permission_classes (list): Specifies the permissions required to access this view.
-            Only authenticated users are allowed.
-
-    Raises:
-        Exception: If any error occurs during the database query execution, it is caught
-            and returned as a 500 Internal Server Error response.
+    Handles GET requests to retrieve transaction details by date for the authenticated user.
     """
+    
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
