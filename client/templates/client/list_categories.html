@@ -1,0 +1,66 @@
+{% include "client/base.html" %}
+
+
+{% block content %}
+
+
+    <div class="container py-5">
+        <h1 class="mb-4 text-center">List of Categories</h1>
+
+        <table class="table" id="categoryList">
+            <thead>
+            <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Created At</th>
+                <th scope="col">Updated At</th>
+
+            </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+
+        function getCookieValue(name) {
+            const cookieString = document.cookie;
+            const cookies = cookieString.split('; ').reduce((acc, current) => {
+                const [key, value] = current.split('=');
+                acc[key] = value;
+                return acc;
+            }, {});
+            return cookies[name];
+        }
+        
+
+        async function fetchCategoryListData() {
+            const accessToken = getCookieValue('access_token');
+
+            const response = await fetch('http://127.0.0.1:8000/api/v1/category/', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+            const data = await response.json();
+            const tableBody = document.querySelector("#categoryList tbody");
+            data.forEach(item => {
+                const row = `<tr>
+                <td>${item.name}</td>
+                <td>${item.created_at}</td>
+                <td>${item.updated_at}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        window.onload = function () {
+            fetchCategoryListData();
+        }
+    </script>
+
+
+{% endblock %}

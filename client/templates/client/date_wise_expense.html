@@ -1,55 +1,65 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Transaction Report</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
+{% include "client/base.html" %}
 
-  <div class="container py-5">
-    <h1 class="mb-4 text-center">Transaction Report</h1>
 
-    <table class="table" id="transactionTable">
-        <thead>
-        <tr>
-            <th scope="col">Date</th>
-            <th scope="col">Description</th>
-            <th scope="col">Amount</th>
-        </tr>
-        </thead>
-        <tbody>
+{% block content %}
 
-        </tbody>
-    </table>
 
-    <script>
+    <div class="container py-5">
+        <h1 class="mb-4 text-center">Transaction Report</h1>
 
-        async function fetchTransactionData() {
-        const response = await fetch('http://127.0.0.1:8000/api/v1/transaction-detail/', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ0NzI0MTM4LCJpYXQiOjE3NDQ3MjM4MzgsImp0aSI6IjgzZjBiMDRlMGEwODQwZGU4ODc3ZWYxOGQ2NmI0YmI3IiwidXNlcl9pZCI6MTV9.N5jxqZ4Qz5EGj-F0d8_cyCqorlzcYKnGB8wQ7VyfbLk'
+        <table class="table" id="transactionTable">
+            <thead>
+            <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Description</th>
+                <th scope="col">Amount</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+        </table>
+    </div>
+
+        <script>
+
+            function getCookieValue(name) {
+                const cookieString = document.cookie;
+                const cookies = cookieString.split('; ').reduce((acc, current) => {
+                    const [key, value] = current.split('=');
+                    acc[key] = value;
+                    return acc;
+                }, {});
+                return cookies[name];
+              }
+            
+
+            async function fetchTransactionData() {
+                const accessToken = getCookieValue('access_token');
+
+                const response = await fetch('http://127.0.0.1:8000/api/v1/transaction-detail/', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+                const data = await response.json();
+                const tableBody = document.querySelector("#transactionTable tbody");
+                data.forEach(item => {
+                    const row = `<tr>
+                    <td>${item.transaction_date}</td>
+                    <td>${item.category_name}</td>
+                    <td>${item.amount.toFixed(2)}</td>
+                    </tr>`;
+                    tableBody.innerHTML += row;
+                });
             }
-        });
-        const data = await response.json();
-        const tableBody = document.querySelector("#transactionTable tbody");
-        data.forEach(item => {
-            const row = `<tr>
-            <td>${item.transaction_date}</td>
-            <td>${item.category_name}</td>
-            <td>${item.amount.toFixed(2)}</td>
-            </tr>`;
-            tableBody.innerHTML += row;
-        });
-        }
 
-        window.onload = function () {
-            fetchTransactionData();
-        }
-    </script>
+            window.onload = function () {
+                fetchTransactionData();
+            }
+        </script>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+
+{% endblock %}
