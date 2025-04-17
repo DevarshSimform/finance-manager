@@ -5,14 +5,14 @@
 
 
     <div class="container py-5">
-        <h1 class="mb-4 text-center">List of Transactions</h1>
+        <h1 class="mb-4 text-center">Transactions</h1>
 
         <table class="table" id="transactionList">
             <thead>
             <tr>
-                <th scope="col">Email</th>
                 <th scope="col">Category Name</th>
                 <th scope="col">Amount</th>
+                <th scope="col">Payment Type</th>
                 <th scope="col">Type</th>
                 <th scope="col">Description</th>
             </tr>
@@ -50,9 +50,9 @@
             const tableBody = document.querySelector("#transactionList tbody");
             data.forEach(item => {
                 const row = `<tr>
-                <td>${item.user_email}</td>
                 <td>${item.category_name}</td>
                 <td>${Number(item.amount).toFixed(2)}</td>
+                <td>${item.source}</td>
                 <td>${item.type}</td>
                 <td>${item.description}</td>
                 </tr>`;

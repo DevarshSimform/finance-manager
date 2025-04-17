@@ -13,6 +13,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from finance.serializers import RegisterSerializer, LoginSerializer
 from finance.models import CustomUser
+from finance.tasks import delete_inactive_users
 
 
 
@@ -72,9 +73,8 @@ class VerifyEmailAPIView(APIView):
 
         user_id = cache.get(f"verify:{token}")
         if not user_id:
-            # user = CustomUser.objects.filter(is_active=False).first()
-            # if user:
-            #     user.delete(hard=True)
+            # delete inactive user
+            delete_inactive_users.delay()
             return Response({"error": "Invalid or expired token, Register user again"}, status=400)
 
         try:
@@ -87,7 +87,6 @@ class VerifyEmailAPIView(APIView):
 
         user.is_active = True
         user.save()
-
 
         cache.delete(f"verify:{token}")
 

@@ -60,8 +60,11 @@
 
             if (response.ok) {
                 // Store access token in cookie (expires in 1 day)
-                document.cookie = `access_token=${data.access}; path=/; max-age=86400;`;
+                document.cookie = `access_token=${data.access}; path=/;`;
                 window.location.href = `http://127.0.0.1:8000/home/`; 
+            }
+            else {
+                window.location.href = `http://127.0.0.8000/login/`;
             }
         }
 

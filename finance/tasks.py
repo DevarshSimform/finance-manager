@@ -37,7 +37,7 @@ def send_daily_transaction_email():
     print("Sending email...")
     for user in CustomUser.objects.exclude(username='root'):
         
-        if not user.email or user.email == 'AnonymousUser':
+        if not user.email or user.email == 'AnonymousUser' or user.is_active == False:
             continue
 
         transactions = Transaction.objects.filter(
@@ -70,3 +70,15 @@ def send_daily_transaction_email():
         )
         email.attach_alternative(html_content, "text/html")
         email.send()
+
+
+@shared_task
+def delete_inactive_users():
+    """
+    Deletes all inactive users from the database and returns the count of deleted users.
+    """
+    users = CustomUser.objects.filter(is_active=False)
+    count = users.count()
+
+    users.delete()
+    return f"Deleted {count} inactive users"
