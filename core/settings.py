@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'developersOnly',
     'transactionLog',
     'client',
+    'group',
 ]
 
 REST_FRAMEWORK = {
