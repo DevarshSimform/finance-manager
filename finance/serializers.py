@@ -34,7 +34,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
     Serializer for user details, including fields like id, username, email, current balance, active status, and date joined.
     """
     date_joined = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
-    current_balance = serializers.ReadOnlyField(source='balance')
+    current_balance = serializers.DecimalField(source='balance', max_digits=12, decimal_places=2, read_only=True)
     class Meta:
         model = CustomUser
         fields = ['id', 'username', 'email', 'current_balance', 'is_active', 'date_joined'] 
