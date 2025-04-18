@@ -46,30 +46,32 @@ def send_daily_transaction_email():
             is_deleted = False
         )
         
-        total_income = sum(txn.amount for txn in transactions if txn.type == 'income')
-        total_expense = -sum(txn.amount for txn in transactions if txn.type == 'expense')  # amount is negative
-        net_balance = total_income - total_expense
+        if transactions:
+            
+            total_income = sum(txn.amount for txn in transactions if txn.type == 'income')
+            total_expense = -sum(txn.amount for txn in transactions if txn.type == 'expense')  # amount is negative
+            net_balance = total_income - total_expense
 
-        context = {
-            'user': user,
-            'date': yesterday,
-            'transactions': transactions,
-            'total_income': total_income,
-            'total_expense': total_expense,
-            'net_balance': net_balance,
-        }
+            context = {
+                'user': user,
+                'date': yesterday,
+                'transactions': transactions,
+                'total_income': total_income,
+                'total_expense': total_expense,
+                'net_balance': net_balance,
+            }
 
-        html_content = render_to_string('finance/daily_transaction_summary.html', context)
-        text_content = strip_tags(html_content)
+            html_content = render_to_string('finance/daily_transaction_summary.html', context)
+            text_content = strip_tags(html_content)
 
-        email = EmailMultiAlternatives(
-            subject="Your Daily Transaction Summary",
-            body=text_content,
-            from_email=settings.EMAIL_HOST_USER,
-            to=[user.email],
-        )
-        email.attach_alternative(html_content, "text/html")
-        email.send()
+            email = EmailMultiAlternatives(
+                subject="Your Daily Transaction Summary",
+                body=text_content,
+                from_email=settings.EMAIL_HOST_USER,
+                to=[user.email],
+            )
+            email.attach_alternative(html_content, "text/html")
+            email.send()
 
 
 @shared_task

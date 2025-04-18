@@ -16,7 +16,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     """
     Serializer for user registration, handling user creation and ensuring the password is write-only.
     """
-    
+
     # here we accept password from client but not sending it into response by setting write-only is True
     password = serializers.CharField(write_only=True, min_length=6, required=True)
     class Meta:
@@ -33,7 +33,6 @@ class UserDetailSerializer(serializers.ModelSerializer):
     """
     Serializer for user details, including fields like id, username, email, current balance, active status, and date joined.
     """
-
     date_joined = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
     current_balance = serializers.ReadOnlyField(source='balance')
     class Meta:
@@ -46,7 +45,6 @@ class LoginSerializer(serializers.Serializer):
     """
     Serializer for user login, validates credentials, updates last login, and returns user details with JWT tokens.
     """
-    
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
 
@@ -77,7 +75,6 @@ class CategorySerializer(serializers.ModelSerializer):
     """
     CategorySerializer is a Django REST Framework serializer for the Category model, handling serialization, deserialization, custom validation for the `name` field, and formatting for `created_at` and `updated_at` fields.
     """
-
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
     updated_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
     class Meta:
@@ -88,10 +85,9 @@ class CategorySerializer(serializers.ModelSerializer):
         """
         Validates and formats a category name to lowercase, ensuring it meets length and character requirements.
         """
-
         # Trim, reduce multiple spaces to single space, and lowercase
         value = re.sub(r'\s+', ' ', value.strip()).lower()
-        
+
         # Validate with regex
         pattern = r'^[a-z0-9\- ]{3,50}$'
         if not re.match(pattern, value):
@@ -128,7 +124,6 @@ class TransactionSerializer(serializers.ModelSerializer):
 
     def validate_amount(self, value):
         """Validate that the amount is positive; raise ValidationError if not."""
-
         if value <= 0:
             raise ValidationError("Amount must be positive")
         return value
@@ -137,7 +132,6 @@ class TransactionSerializer(serializers.ModelSerializer):
         """
         Validates and adjusts the transaction amount based on its type (expense or income).
         """
-
         type = data.get('type')
         amount = data.get('amount')
         if type == Transaction.EXPENSE and amount > 0:
@@ -165,7 +159,6 @@ class TransactionSerializer(serializers.ModelSerializer):
         """
         Updates only the description field of the instance, ignoring other fields.
         """
-
         validated_data = {'description': validated_data.get('description', instance.description)}
         return super().update(instance, validated_data)
     
@@ -173,7 +166,6 @@ class TransactionSerializer(serializers.ModelSerializer):
         """
         Override get_extra_kwargs to make specific fields read-only when an instance is present (e.g., during retrieve, update, or delete operations).
         """
-
         kwargs = super().get_extra_kwargs()
         if self.instance:
             read_only_fields = ['id', 'category_id', 'amount', 'type']
@@ -188,16 +180,15 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
     """
     Serializer for Transaction model, including user and category details, with formatted timestamps and related information.
     """
-    
-    user_id = serializers.StringRelatedField()
-    category_id = serializers.StringRelatedField()
+    user_email = serializers.StringRelatedField(source='user_id.email')
+    category_name = serializers.StringRelatedField(source='category_id')
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
     updated_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
     user_info = UserDetailSerializer(source='user_id', read_only=True)
     category_info = CategoryDetailSerializer(source='category_id', read_only=True)
     class Meta:
         model = Transaction
-        fields = ['id', 'user_id', 'category_id', 'amount', 'type', 'source', 'description', 'user_info', 'category_info', 'created_at', 'updated_at']
+        fields = ['id', 'user_email', 'category_name', 'amount', 'type', 'source', 'description', 'user_info', 'category_info', 'created_at', 'updated_at']
 
 
 

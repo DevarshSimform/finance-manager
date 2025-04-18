@@ -1,5 +1,12 @@
 from django.urls import path
-from client.views import render_category_wise_expense, render_date_wise_transaction, home_page, login_user, list_transaction, list_category
+from client.views import (
+    render_category_wise_expense, 
+    render_date_wise_transaction, 
+    home_page, 
+    login_user, 
+    list_transaction, 
+    list_category
+)
 
 urlpatterns = [
     path('home/', home_page, name='home'),

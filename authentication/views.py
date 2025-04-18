@@ -49,7 +49,7 @@ class RegisterAPIView(APIView):
                 subject="Verify Your Email",
                 body=html_content,
                 from_email=settings.EMAIL_HOST_USER,
-                to=['pateldc014@gmail.com'],
+                to=[user.email],
             )
             email.content_subtype = "html"
             email.send()

@@ -29,7 +29,9 @@
                 {% for txn in transactions %}
                 <tr>
                     <td>{{ txn.type|title }}</td>
-                    <td>{{ txn.amount }}</td>
+                    <td style="color: {% if txn.amount > 0 %}green{% else %}red{% endif %};">
+                        ₹{{ txn.amount }}
+                    </td>
                     <td>{{ txn.description }}</td>
                 </tr>
                 {% endfor %}

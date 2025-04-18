@@ -2,7 +2,12 @@ from django.db import connection
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from finance.models import Transaction, Category, CustomUser, PasswordReset
+from finance.models import (
+    Transaction, 
+    Category, 
+    CustomUser, 
+    PasswordReset
+)
 from finance.serializers import (
     CategorySerializer, 
     TransactionSerializer, 
@@ -37,7 +42,6 @@ class UserProfileView(RetrieveAPIView):
     """
     View to retrieve the authenticated user's profile details.
     """
-
     permission_classes = [IsAuthenticated]
     serializer_class = UserDetailSerializer
 
@@ -50,7 +54,6 @@ class CategoryListCreateAPIView(ListCreateAPIView):
     """
     API view for listing and creating categories with custom permissions, throttling, filtering, and signals.
     """
-    
     permission_classes = [HasObjectPermOrAdmin]
     serializer_class = CategorySerializer
     throttle_classes = [ScopedRateThrottle]
@@ -86,7 +89,6 @@ class CategoryRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     """
     API view to retrieve, update, or delete a Category instance with specific permissions.
     """
-
     permission_classes = [HasObjectPermOrAdmin]
 
     queryset = Category.objects.all()
@@ -98,7 +100,6 @@ class TransactionListCreateAPIView(ListCreateAPIView):
     """
     API view for listing and creating transactions with permissions, throttling, filtering, and superuser restrictions.
     """
-
     permission_classes = [IsAuthenticated]
     serializer_class = TransactionSerializer
     throttle_classes = [ScopedRateThrottle]
@@ -128,7 +129,6 @@ class TransactionRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     """
     API view for retrieving, updating, or deleting a Transaction instance with custom permissions, throttling, and serializers.
     """
-    
     permission_classes = [IsOwnerOrAdmin]
     throttle_classes = [ScopedRateThrottle]
 
@@ -155,7 +155,6 @@ class BalanceViewAPIView(APIView):
     """
     APIView to retrieve the authenticated user's total balance using the balance property.
     """
-    
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -169,7 +168,6 @@ class RequestPasswordReset(GenericAPIView):
     """
     Handles password reset requests by generating a token, saving it, and sending a reset email to the user.
     """
-
     permission_classes = [AllowAny]
     throttle_classes = [ScopedRateThrottle]
     throttle_Scope = 'low'
@@ -206,7 +204,6 @@ class ResetPassword(GenericAPIView):
     """
     Handles password reset by validating the token, updating the user's password, and deleting the reset token.
     """
-    
     permission_classes = []
     serializer_class = ResetPasswordSerializer
 
@@ -241,7 +238,6 @@ class GetCategoryTotal(APIView):
     """
     APIView to retrieve total amounts grouped by category for the authenticated user.
     """
-    
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -262,7 +258,6 @@ class TransactionDetailByDate(APIView):
     """
     Handles GET requests to retrieve transaction details by date for the authenticated user.
     """
-    
     permission_classes = [IsAuthenticated]
 
     def get(self, request):

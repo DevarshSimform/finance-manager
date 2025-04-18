@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 
 
 def home_page(request):
@@ -6,10 +6,6 @@ def home_page(request):
 
 
 def render_category_wise_expense(request):
-    
-    # print(request.headers.get('Authorization'))
-    # if not request.headers.get('Authorization'):
-    #     return redirect('login')
     return render(request, 'client/category_wise_expense.html')
 
 

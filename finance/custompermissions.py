@@ -1,7 +1,6 @@
 from rest_framework.permissions import BasePermission
 from guardian.core import ObjectPermissionChecker
 from django.contrib.auth.models import Group
-from guardian.shortcuts import get_objects_for_user
 
 
 class HasObjectPermOrAdmin(BasePermission):
@@ -10,6 +9,16 @@ class HasObjectPermOrAdmin(BasePermission):
     """
     
     def has_object_permission(self, request, view, obj):
+        """
+        Logic:
+            - If the request method is 'GET', the user must have the 'finance.view_category' permission
+              for the object or be a superuser.
+            - For other request methods:
+                - Check if the user has the 'finance.view_category' permission for the object and
+                  if the 'default_categories' group does not have the same permission for the object.
+                - If the above condition is met, return True.
+                - Otherwise, return True only if the user is a superuser; otherwise, return False.
+        """
         if request.method == 'GET':
             return request.user.has_perm('finance.view_category', obj) or request.user.is_superuser
         else:

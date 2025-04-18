@@ -99,7 +99,7 @@ class Transaction(DateTimeMixin):
     """
 
     def get_other_category():
-        return Category.objects.get_or_create(name='other')[0]
+        return Category.objects.get_or_create(name='other')[0] or None
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='transactions')
