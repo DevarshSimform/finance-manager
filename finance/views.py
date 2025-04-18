@@ -109,7 +109,7 @@ class TransactionListCreateAPIView(ListCreateAPIView):
     def get_queryset(self):
         if self.request.user.is_superuser:
             return Transaction.objects.all()
-        return Transaction.objects.filter(user_id=self.request.user)
+        return Transaction.objects.filter(user_id=self.request.user).order_by('-created_at')
     
     def perform_create(self, serializer):
         if self.request.user.is_superuser:
