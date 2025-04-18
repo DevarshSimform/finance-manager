@@ -71,7 +71,7 @@ This project includes custom **PostgreSQL stored functions** that efficiently an
 | POST   | `/login/`        | Obtain access and refresh tokens    |
 | POST   | `/logout/`       | Logout and blacklist refresh token  |
 | POST   | `/register/`     | Register new user (triggers 2FA)    |
-| POST   | `/verify-email/` | Verify email for 2FA registration   |
+| GET   | `/verify-email/` | Verify email for 2FA registration   |
 
 ---
 
