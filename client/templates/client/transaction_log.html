@@ -1,0 +1,78 @@
+{% include "client/base.html" %}
+
+
+{% block content %}
+
+
+    <div class="container py-5">
+        <h1 class="mb-4 text-center">Log</h1>
+
+        <table class="table" id="transactionLog">
+            <thead>
+            <tr>
+                <th scope="col">Id</th>
+                <th scope="col">Transaction</th>
+                <th scope="col">User</th>
+                <th scope="col">Category</th>
+                <th scope="col">Amount</th>
+                <th scope="col">Type</th>
+                <th scope="col">Action</th>
+                <th scope="col">Description</th>
+                <th scope="col">Logged At</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+
+        function getCookieValue(name) {
+            const cookieString = document.cookie;
+            const cookies = cookieString.split('; ').reduce((acc, current) => {
+                const [key, value] = current.split('=');
+                acc[key] = value;
+                return acc;
+            }, {});
+            return cookies[name];
+          }
+        
+
+        async function fetchTransactionLogData() {
+            const accessToken = getCookieValue('access_token');
+
+            const response = await fetch('http://127.0.0.1:8000/api/log/', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+            const data = await response.json();
+            const tableBody = document.querySelector("#transactionLog tbody");
+            data.forEach(item => {
+                const row = `<tr>
+                <td>${item.id}</td>
+                <td>${item.transaction}</td>
+                <td>${item.user}</td>
+                <td>${item.category}</td>
+                <td>${Number(item.amount).toFixed(2)}</td>
+                <td>${item.type}</td>
+                <td>${item.action}</td>
+                <td>${item.description}</td>
+                <td>${item.logged_at}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        window.onload = function () {
+            fetchTransactionLogData();
+        }
+    </script>
+
+
+
+{% endblock %}

@@ -5,7 +5,8 @@ from client.views import (
     home_page, 
     login_user, 
     list_transaction, 
-    list_category
+    list_category,
+    transaction_log
 )
 
 urlpatterns = [
@@ -18,6 +19,8 @@ urlpatterns = [
 
     path('transaction/', list_transaction, name='transaction'),
     path('category/', list_category, name='category'),
+
+    path('log/', transaction_log, name='log')
 
 ]
 

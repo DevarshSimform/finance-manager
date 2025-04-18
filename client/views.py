@@ -23,3 +23,6 @@ def list_transaction(request):
 
 def list_category(request):
     return render(request, 'client/list_categories.html')
+
+def transaction_log(request):
+    return render(request, 'client/transaction_log.html')
