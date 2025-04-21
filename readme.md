@@ -65,12 +65,13 @@ This project includes custom **PostgreSQL stored functions** that efficiently an
 ## 🧭 API Endpoints
 
 ### 🔑 Authentication (`/api/auth/`)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/token/` | Get access & refresh token |
-| POST | `/token/refresh/` | Refresh access token |
-| POST | `/forgot-password/` | Request password reset |
-| POST | `/reset-password/<token>/` | Reset password |
+
+| Method | Endpoint         | Description                         |
+|--------|------------------|-------------------------------------|
+| POST   | `/login/`        | Obtain access and refresh tokens    |
+| POST   | `/logout/`       | Logout and blacklist refresh token  |
+| POST   | `/register/`     | Register new user (triggers 2FA)    |
+| GET   | `/verify-email/` | Verify email for 2FA registration   |
 
 ---
 
@@ -78,13 +79,15 @@ This project includes custom **PostgreSQL stored functions** that efficiently an
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET/POST | `/transactions/` | List and create transactions |
-| GET/PUT/DELETE | `/transactions/<uuid>/` | Manage specific transaction |
+| GET/PUT/PATCH/DELETE | `/transactions/<uuid>/` | Manage specific transaction |
 | GET/POST | `/category/` | List and create categories |
-| GET/PUT/DELETE | `/category/<uuid>/` | Manage specific category |
+| GET/PUT/PATCH/DELETE | `/category/<uuid>/` | Manage specific category |
 | GET | `/balance/` | Get current balance |
 | GET | `/profile/` | User profile info |
 | GET | `/category-wise-expanse/` | Expenses categorized (uses stored procedure) |
 | GET | `/transaction-detail/` | Transaction details by date (uses stored procedure) |
+| POST | `/forgot-password/` | Request password reset |
+| POST | `/reset-password/<token>/` | Reset password |
 
 ---
 
@@ -93,11 +96,11 @@ This project includes custom **PostgreSQL stored functions** that efficiently an
 |--------|----------|-------------|
 | GET | `/transactions/all` | All transactions |
 | GET | `/transactions/deleted` | Soft-deleted transactions |
-| PATCH | `/transactions/restore/<uuid>/` | Restore a soft-deleted transaction |
+| POST | `/transactions/restore/<uuid>/` | Restore a soft-deleted transaction |
 | DELETE | `/transactions/hard-delete/<uuid>/` | Permanently delete a transaction |
 | GET | `/users/all` | All users |
 | GET | `/users/deleted` | Soft-deleted users |
-| PATCH | `/users/restore/<int>/` | Restore a soft-deleted user |
+| POST | `/users/restore/<int>/` | Restore a soft-deleted user |
 
 ---
 
