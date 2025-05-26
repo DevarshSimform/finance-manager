@@ -1,5 +1,8 @@
+import os
 import secrets
+from dotenv import load_dotenv
 from django.conf import settings
+from django.urls import reverse
 from django.core.mail import EmailMessage
 from django.core.cache import cache
 from django.template.loader import render_to_string
@@ -13,9 +16,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from finance.serializers import RegisterSerializer, LoginSerializer
 from finance.models import CustomUser
-from finance.tasks import delete_inactive_users
+from finance.tasks import delete_unverified_user
 
-
+load_dotenv()
 
 class RegisterAPIView(APIView):
     """
@@ -36,10 +39,12 @@ class RegisterAPIView(APIView):
                 is_active=False
             )
 
-            # Store token in Redis via Django cache, mapped to email
-            cache.set(f"verify:{token}", user.id, timeout=180)  # 3 mins
+            delete_unverified_user.apply_async((user.email,), countdown=os.getenv('TIMEOUT'))
 
-            verification_url = f"http://localhost:8000/api/auth/verify-email/?token={token}"
+            # Store token in Redis via Django cache, mapped to email
+            cache.set(f"verify:{token}", user.id, timeout=os.getenv('TIMEOUT'))  # 3 mins
+
+            verification_url = request.build_absolute_uri(reverse("verify-email") + f"?token={token}")
             html_content = render_to_string("authentication/regstration_email.html", {
                 "username": user.username,
                 "verification_url": verification_url
@@ -73,8 +78,6 @@ class VerifyEmailAPIView(APIView):
 
         user_id = cache.get(f"verify:{token}")
         if not user_id:
-            # delete inactive user
-            delete_inactive_users.delay()
             return Response({"error": "Invalid or expired token, Register user again"}, status=400)
 
         try:

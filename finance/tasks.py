@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.utils.html import strip_tags
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
+from django.contrib.auth.models import Group
 
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 
@@ -75,12 +76,12 @@ def send_daily_transaction_email():
 
 
 @shared_task
-def delete_inactive_users():
-    """
-    Deletes all inactive users from the database and returns the count of deleted users.
-    """
-    users = CustomUser.objects.filter(is_active=False)
-    count = users.count()
-
-    users.delete()
-    return f"Deleted {count} inactive users"
+def delete_unverified_user(user_email):
+    try:
+        user = CustomUser.objects.get(email=user_email)
+        if not user.is_active:
+            user.groups.clear()
+            user.delete(hard=True)
+    except:
+        pass
+    return f"Deleted unverified user"

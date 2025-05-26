@@ -15,7 +15,7 @@ def default_user_categories(sender, instance, created, **kwargs):
     """
     if created:
         user = instance
-        default_group = Group.objects.get(name='default_categories')
+        default_group, _ = Group.objects.get_or_create(name='default_categories')
         user.groups.add(default_group)
 
 
@@ -29,5 +29,5 @@ def category_owner_permission(sender, instance, request, created, is_superuser, 
         user = request.user
         assign_perm('view_category', user, category)
         if is_superuser:
-            group = Group.objects.get(name='default_categories')
+            group = Group.objects.get_or_create(name='default_categories')
             assign_perm('view_category', group, category)
