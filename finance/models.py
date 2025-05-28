@@ -25,7 +25,7 @@ class CustomUser(AbstractUser):
     """
     CustomUser model extends AbstractUser, uses email as the username field, supports soft delete, and provides balance calculation and restore functionality.
     """
-    email = models.EmailField()
+    email = models.EmailField(unique=True)
     is_deleted = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
