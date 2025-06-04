@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+  <form method="post">
+    {% csrf_token %}
+    {{ wizard.management_form }}
+    <fieldset>
+      {{ wizard.form.as_p }}
+    </fieldset>
+    <button type="submit">{% if wizard.steps.last %}Finish{% else %}Next{% endif %}</button>
+  </form>
+{% endblock %}

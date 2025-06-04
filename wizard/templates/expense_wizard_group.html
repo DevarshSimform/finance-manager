@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block extra_css %}
+  {{ wizard.form.media.css }}
+{% endblock %}
+
+{% block content %}
+<h2>Select Group</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ wizard.management_form }}
+    {{ wizard.form|crispy }}
+    {% if wizard.steps.prev %}
+    <button type="submit" name="wizard_goto_step" value="{{ wizard.steps.prev }}">Previous</button>
+    {% endif %}
+    <button type="submit">Next</button>
+    <button type="submit" name="save">Save</button>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+  {{ wizard.form.media.js }}
+{% endblock %}

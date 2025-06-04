@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Expense Created</h2>
+  <p><strong>Description:</strong> {{ expense.description }}</p>
+  <p><strong>Amount:</strong> {{ expense.amount }}</p>
+  <p><strong>Group:</strong> {{ expense.group.name }}</p>
+{% endblock %}

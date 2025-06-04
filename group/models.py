@@ -10,6 +10,9 @@ class Group(models.Model):
     members = models.ManyToManyField(CustomUser, through='GroupMember')
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return self.name
+
 
 class GroupMember(models.Model):
     
