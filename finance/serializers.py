@@ -166,7 +166,9 @@ class TransactionSerializer(serializers.ModelSerializer):
         Updates only the description field of the instance, ignoring other fields.
         """
 
-        validated_data = {'description': validated_data.get('description', instance.description)}
+        validated_data = {
+            'description': validated_data.get('description', instance.description)
+        }
         return super().update(instance, validated_data)
     
     def get_extra_kwargs(self):

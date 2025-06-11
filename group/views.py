@@ -1,16 +1,16 @@
-from django.shortcuts import render
-
 from rest_framework.generics import (
     ListAPIView,
+    CreateAPIView,
     ListCreateAPIView,
     RetrieveUpdateDestroyAPIView,
 )
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from group.models import (
-    Group,
+    Group, Expense
 )
-from group.serializers import GroupSerializer, GroupCreateSerializer
+from group.serializers import GroupSerializer, GroupListSerializer, GroupCreateSerializer, ExpenseSerializer, ExpenseListSerializer, ExpenseCreateSerializerFactory, AddMemberToGroupSerializer, RemoveMemberFromGroupSerializer, SettleUpExpenseSerializer, RevertSettleUpSerializer
+
 
 
 class GroupListCreateAPIView(ListCreateAPIView):
@@ -23,4 +23,60 @@ class GroupListCreateAPIView(ListCreateAPIView):
         if self.request.method == 'POST':
             return GroupCreateSerializer
         else:
-            return GroupSerializer
+            return GroupListSerializer
+
+
+class GroupRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
+
+    queryset = Group.objects.all()
+    permission_classes = [AllowAny]
+    serializer_class = GroupSerializer
+
+
+
+class AddMemberToGroup(CreateAPIView):
+
+    queryset = Group.objects.all()
+    permission_classes = [AllowAny]
+    serializer_class = AddMemberToGroupSerializer
+
+
+class RemoveMemberFromGroup(CreateAPIView):
+
+    queryset = Group.objects.all()
+    permission_classes = [AllowAny]
+    serializer_class = RemoveMemberFromGroupSerializer
+
+
+class ExpenseListCreateAPIView(ListCreateAPIView):
+
+    queryset = Expense.objects.all()
+    permission_classes = [AllowAny]
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            SerializerCreateClass = ExpenseCreateSerializerFactory.get_serializer(self.request.data)
+            return SerializerCreateClass
+        else:
+            return ExpenseListSerializer
+
+
+class ExpenseRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
+
+    queryset = Expense.objects.all()
+    permission_classes = [AllowAny]
+    serializer_class = ExpenseSerializer
+
+
+class SettleUpExpenseAPIView(CreateAPIView):
+
+    queryset = Expense.objects.all()
+    permission_classes = [AllowAny]
+    serializer_class = SettleUpExpenseSerializer
+
+
+class RevertSettleUpAPIView(CreateAPIView):
+
+    queryset = Expense.objects.all()
+    permission_classes = [AllowAny]
+    serializer_class = RevertSettleUpSerializer

@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 
 from finance.models import CustomUser
 
@@ -26,6 +27,14 @@ class Expense(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     split_between = models.ManyToManyField(CustomUser, through='SplitExpense', related_name='split_expenses')
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        if not GroupMember.objects.filter(group=self.group, user=self.created_by).exists():
+            raise ValidationError("The creater must be a member of group")
+        
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
 
 
 class SplitExpense(models.Model):
