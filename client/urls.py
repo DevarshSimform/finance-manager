@@ -1,16 +1,18 @@
 from django.urls import path
-from client.views import render_category_wise_expense, render_date_wise_transaction, home_page, login_user, list_transaction, list_category
+from client import views
 
 urlpatterns = [
-    path('home/', home_page, name='home'),
+    path('home/', views.home_page, name='home'),
+    path('overview/', views.overview, name='overview'),
+    path('categories/', views.list_category, name='categories'),
+    path('transactions/', views.list_transaction, name='transactions'),
+    path('analytics/', views.analytics, name='analytics'),
+    path('groups/', views.list_group, name='groups'),
 
-    path('category-expense-analysis/', render_category_wise_expense, name='category-wise-expense'),
-    path('transaction-analysis/', render_date_wise_transaction, name='date-wise-transaction'),
+    path('category-expense-analysis/', views.render_category_wise_expense, name='category-wise-expense'),
+    path('transaction-analysis/', views.render_date_wise_transaction, name='date-wise-transaction'),
 
-    path('login/', login_user, name='login'),
-
-    path('transaction/', list_transaction, name='transaction'),
-    path('category/', list_category, name='category'),
+    path('login/', views.login_user, name='login_user'),
 
 ]
 

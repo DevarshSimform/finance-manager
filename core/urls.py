@@ -27,7 +27,7 @@ urlpatterns = [
     path('api/auth/', include('authentication.urls')),
     path('api/dev/', include('developersOnly.urls')),
     path('', include('client.urls')),
-    path('api/v2/', include('group.urls')),
+    path('api/v1/', include('group.urls')),
 
 
     # Swagger UI:

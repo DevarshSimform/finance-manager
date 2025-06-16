@@ -1,0 +1,201 @@
+{% extends "client/base.html" %}
+
+
+{% block css %}
+
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+        }
+
+        .section {
+            display: block;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .data-table {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 1px solid #eee;
+        }
+
+        .table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .table {
+            background: #f8f9fa;
+        }
+
+{% endblock css %}
+
+
+{% block nav_content %}
+
+    <nav class="navbar" style="width: 100%;">
+        <h2 id="pageTitle">Group List</h2>
+        <div class="user-info">
+            <button class="btn-primary" onclick="showAddTransactionModal()">Add New Group</button>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+{% endblock nav_content %}
+
+
+{% block content %}
+
+    <!-- Groups Section -->
+    <div class="section" id="groups" style="width: 100%;">
+                    
+        <div class="data-table">
+            <div style="padding: 20px;">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th scope="col">Name</th>
+                                <th scope="col">Created_by</th>
+                                <th scope="col">created_at</th>
+                                <th scope="col">Member Count</th>
+                            </tr>
+                        </thead>
+                        <tbody id="groupsTable">
+                            <!-- Transactions will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}
+
+
+{% block javascript %}
+
+    <script>
+
+        async function loadGroups() {
+            try {
+                const response = await authenticatedFetch(`${API_BASE_URL}/v1/group/`);
+                if (response.ok) {
+                    groups = await response.json();
+                    renderGroupsTable(groups);
+                }
+            } catch (error) {
+                console.error('Error loading groups:', error);
+            }
+        }
+
+        function renderGroupsTable(groups) {
+            const tbody = document.getElementById('groupsTable');
+            console.log('tbody:', tbody);
+            console.log('groups:', groups);
+            if (!groups || groups.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6">No groups found.</td></tr>';
+                return;
+            }
+
+            groups.forEach(group => {
+                const row = `<tr>
+                    <td>${group.name || '-'}</td>
+                    <td>${group.created_by || 'Uncategorized'}</td>
+                    <td>${formatDate(group.created_at) || 'Uncategorized'}</td>
+                    <td>${group.members && group.members.length || 0} members</td>
+                </tr>`
+                tbody.innerHTML += row
+            })
+
+            function formatDate(dateString) {
+                return new Date(dateString).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            }
+        }
+
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if tokens and user info exist
+            const storedUserData = localStorage.getItem('userData');
+            const storedAccessToken = localStorage.getItem('accessToken');
+
+            if (storedUserData && storedAccessToken) {
+                // Parse user data
+                userData = JSON.parse(storedUserData);
+                accessToken = storedAccessToken;
+                refreshToken = localStorage.getItem('refreshToken');
+
+                // Hide login/register container, show dashboard
+                document.querySelector('.container').style.display = 'none';
+                // Assuming you have an element with id='dashboard'
+                document.getElementById('dashboard').classList.add('active');
+
+                // Update welcome text
+                document.getElementById('userWelcome').textContent = `Welcome back, ${userData.username}!`;
+
+                // Load dashboard data
+                showDashboard()
+                loadGroups()
+            } else {
+                // Show login form by default
+                showLogin();
+            }
+
+            // Check if there's a verification token in URL (for email verification)
+            const urlParams = new URLSearchParams(window.location.search);
+            const verificationToken = urlParams.get('token');
+            
+            if (verificationToken) {
+                // Handle email verification
+                verifyEmail(verificationToken);
+            }
+
+        });
+
+    </script>
+
+{% endblock javascript %}

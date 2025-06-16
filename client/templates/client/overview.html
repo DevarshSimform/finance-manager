@@ -1,0 +1,231 @@
+{% extends "client/base.html" %}
+
+    {% block css %}
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dashboard-content {
+            padding: 30px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .section {
+            display: block;
+        }
+
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .card .amount {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .table {
+            background: #f8f9fa;
+        }
+        
+    {% endblock css %}
+    
+    
+    {% block nav_content %}
+    
+        <nav class="navbar">
+            <h2 id="pageTitle">Dashboard Overview</h2>
+            <div class="user-info">
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </nav>
+    
+    {% endblock nav_content %}
+
+
+    {% block content %}
+            
+            <div class="dashboard-content">
+                <!-- Overview Section -->
+                <div class="section" id="overview">
+                    <div class="dashboard-cards">
+                        <div class="card">
+                            <h3>Total Balance</h3>
+                            <div class="amount" id="totalBalance">$12,450.00</div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3>Monthly Income</h3>
+                            <div class="amount" id="monthlyIncome">$5,200.00</div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3>Monthly Expenses</h3>
+                            <div class="amount" id="monthlyExpenses">$3,150.00</div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3>Active Groups</h3>
+                            <div class="amount" id="activeGroups">3</div>
+                        </div>
+                    </div>
+                    
+                    <div class="data-table">
+                        <h3 style="padding: 20px 20px 0;">Recent Transactions</h3>
+                        <div style="padding: 20px;">
+                            <div id="recentTransactions">
+                                <!-- Recent transactions will be loaded here -->
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead class="thead-dark">
+                                            <tr>
+                                                <th scope="col">Description</th>
+                                                <th scope="col">Category</th>
+                                                <th scope="col" class="text-end">Amount</th>
+                                                <th scope="col">Type</th>
+                                                <th scope="col">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="transactionsTable">
+                                            <!-- Transactions will be loaded here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+    {% endblock content %}
+
+
+
+    {% block javascript %}
+    <script>
+
+
+        // Load data functions
+        async function loadOverviewData() {
+            try {
+                // const response = await authenticatedFetch(`${API_BASE_URL}/dashboard-summary/`);
+                //if (response.ok) {
+                    //const data = await response.json();
+                    //updateOverviewCards(data);
+                //}
+                loadTransactions();
+            } catch (error) {
+                console.error('Error loading overview data:', error);
+            }
+        }
+
+        async function loadTransactions() {
+            try {
+                const response = await authenticatedFetch(`${API_BASE_URL}/v1/transactions/`);
+                if (response.ok) {
+                    transactions = await response.json();
+                    renderTransactionsTable(transactions);
+                }
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+            }
+        }
+
+        function renderTransactionsTable(transactions) {
+            const tbody = document.getElementById('transactionsTable');
+            console.log('tbody:', tbody);
+            console.log('transactions:', transactions);
+            if (!transactions || transactions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6">No transactions found.</td></tr>';
+                return;
+            }
+
+            transactions.forEach(transaction => {
+                const row = `<tr>
+                    <td>${transaction.description || '-'}</td>
+                    <td>${transaction.category_name || 'Uncategorized'}</td>
+                    <td class="${transaction.type === 'income' ? 'positive' : 'negative'}">
+                        ${formatCurrency(Number(transaction.amount))}
+                    </td>
+                    <td>
+                        <span class="category-badge" style="background: ${transaction.type === 'income' ? '#e8f5e8' : '#fee'}; color: ${transaction.type === 'income' ? '#2e7d32' : '#d32f2f'}">
+                            ${transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
+                        </span>
+                    </td>
+                    <td>${transaction.source || '-'}</td>
+                </tr>`
+                tbody.innerHTML += row
+            })
+
+        }
+
+        function formatCurrency(amount) {
+            return amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if tokens and user info exist
+            const storedUserData = localStorage.getItem('userData');
+            const storedAccessToken = localStorage.getItem('accessToken');
+
+            if (storedUserData && storedAccessToken) {
+                // Parse user data
+                userData = JSON.parse(storedUserData);
+                accessToken = storedAccessToken;
+                refreshToken = localStorage.getItem('refreshToken');
+
+                // Hide login/register container, show dashboard
+                document.querySelector('.container').style.display = 'none';
+                // Assuming you have an element with id='dashboard'
+                document.getElementById('dashboard').classList.add('active');
+
+                // Update welcome text
+                document.getElementById('userWelcome').textContent = `Welcome back, ${userData.username}!`;
+
+                // Load dashboard data
+                loadOverviewData();
+            } else {
+                // Show login form by default
+                showLogin();
+            }
+
+            // Check if there's a verification token in URL (for email verification)
+            const urlParams = new URLSearchParams(window.location.search);
+            const verificationToken = urlParams.get('token');
+            
+            if (verificationToken) {
+                // Handle email verification
+                verifyEmail(verificationToken);
+            }
+
+        });
+
+
+    </script>
+    {% endblock javascript %}

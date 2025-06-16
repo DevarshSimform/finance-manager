@@ -4,7 +4,7 @@ from rest_framework.generics import (
     ListCreateAPIView,
     RetrieveUpdateDestroyAPIView,
 )
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 
 from group.models import (
     Group, Expense
@@ -16,7 +16,7 @@ from group.serializers import GroupSerializer, GroupListSerializer, GroupCreateS
 class GroupListCreateAPIView(ListCreateAPIView):
 
     queryset = Group.objects.all()
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     # serializer_class = GroupSerializer
 
     def get_serializer_class(self):
@@ -29,7 +29,7 @@ class GroupListCreateAPIView(ListCreateAPIView):
 class GroupRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
 
     queryset = Group.objects.all()
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     serializer_class = GroupSerializer
 
 
@@ -37,21 +37,21 @@ class GroupRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
 class AddMemberToGroup(CreateAPIView):
 
     queryset = Group.objects.all()
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     serializer_class = AddMemberToGroupSerializer
 
 
 class RemoveMemberFromGroup(CreateAPIView):
 
     queryset = Group.objects.all()
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     serializer_class = RemoveMemberFromGroupSerializer
 
 
 class ExpenseListCreateAPIView(ListCreateAPIView):
 
     queryset = Expense.objects.all()
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -64,19 +64,19 @@ class ExpenseListCreateAPIView(ListCreateAPIView):
 class ExpenseRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
 
     queryset = Expense.objects.all()
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     serializer_class = ExpenseSerializer
 
 
 class SettleUpExpenseAPIView(CreateAPIView):
 
     queryset = Expense.objects.all()
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     serializer_class = SettleUpExpenseSerializer
 
 
 class RevertSettleUpAPIView(CreateAPIView):
 
     queryset = Expense.objects.all()
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     serializer_class = RevertSettleUpSerializer

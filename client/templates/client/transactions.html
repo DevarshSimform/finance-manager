@@ -1,0 +1,293 @@
+{% extends "client/base.html" %}
+
+
+{% block css %}
+
+        .data-table {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 1px solid #eee;
+        }
+
+        .table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .table {
+            background: #f8f9fa;
+        }
+
+        .section {
+            display: block;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+
+
+{% endblock css %}
+
+
+{% block nav_content %}
+
+    <nav class="navbar" style="width: 100%;">
+        <h2 id="pageTitle">Transaction List</h2>
+        <div class="user-info">
+            <button class="btn-primary" onclick="showAddTransactionModal()">Add New Transaction</button>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+{% endblock nav_content %}
+
+
+{% block content %}
+
+    <!-- Transactions Section -->
+    <div class="section" id="transactions" style="width: 100%;">
+                    
+        <div class="data-table">
+            <div style="padding: 20px;">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th scope="col">Description</th>
+                                <th scope="col">Category</th>
+                                <th scope="col" class="text-end">Amount</th>
+                                <th scope="col">Type</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionsTable">
+                            <!-- Transactions will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Transaction Modal -->
+    <div class="modal" id="addTransactionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add Transaction</h3>
+                <button class="close-btn" onclick="closeModal('addTransactionModal')">&times;</button>
+            </div>
+            <form id="addTransactionForm">
+                <div class="form-group">
+                    <label for="transactionDescription">Description</label>
+                    <input type="text" id="transactionDescription" name="description" required>
+                </div>
+                <div class="form-group">
+                    <label for="transactionAmount">Amount</label>
+                    <input type="number" id="transactionAmount" name="amount" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="transactionCategory">Category</label>
+                    <select id="transactionCategory" name="category" required>
+                        <option value="">Select Category</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="transactionType">Type</label>
+                    <select id="transactionType" name="type" required>
+                        <option value="expense">Expense</option>
+                        <option value="income">Income</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="transactionDate">Date</label>
+                    <input type="date" id="transactionDate" name="date" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Transaction</button>
+            </form>
+        </div>
+    </div>
+
+{% endblock content %}
+
+
+{% block javascript %}
+
+    <script>
+
+        async function loadTransactions() {
+            try {
+                const response = await authenticatedFetch(`${API_BASE_URL}/v1/transactions/`);
+                if (response.ok) {
+                    transactions = await response.json();
+                    renderTransactionsTable(transactions);
+                }
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+            }
+        }
+
+        function renderTransactionsTable(transactions) {
+            const tbody = document.getElementById('transactionsTable');
+            console.log('tbody:', tbody);
+            console.log('transactions:', transactions);
+            if (!transactions || transactions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6">No transactions found.</td></tr>';
+                return;
+            }
+
+            transactions.forEach(transaction => {
+                const row = `<tr>
+                    <td>${transaction.description || '-'}</td>
+                    <td>${transaction.category_name || 'Uncategorized'}</td>
+                    <td class="${transaction.type === 'income' ? 'positive' : 'negative'}">
+                        ${formatCurrency(Number(transaction.amount))}
+                    </td>
+                    <td>
+                        <span class="category-badge" style="background: ${transaction.type === 'income' ? '#e8f5e8' : '#fee'}; color: ${transaction.type === 'income' ? '#2e7d32' : '#d32f2f'}">
+                            ${transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
+                        </span>
+                    </td>
+                    <td>${transaction.source || '-'}</td>
+                </tr>`
+                tbody.innerHTML += row
+            })
+
+            function formatCurrency(amount) {
+                return amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if tokens and user info exist
+            const storedUserData = localStorage.getItem('userData');
+            const storedAccessToken = localStorage.getItem('accessToken');
+
+            if (storedUserData && storedAccessToken) {
+                // Parse user data
+                userData = JSON.parse(storedUserData);
+                accessToken = storedAccessToken;
+                refreshToken = localStorage.getItem('refreshToken');
+
+                // Hide login/register container, show dashboard
+                document.querySelector('.container').style.display = 'none';
+                // Assuming you have an element with id='dashboard'
+                document.getElementById('dashboard').classList.add('active');
+
+                // Update welcome text
+                document.getElementById('userWelcome').textContent = `Welcome back, ${userData.username}!`;
+
+                // Load dashboard data
+                showDashboard()
+                loadTransactions()
+            } else {
+                // Show login form by default
+                showLogin();
+            }
+
+            // Check if there's a verification token in URL (for email verification)
+            const urlParams = new URLSearchParams(window.location.search);
+            const verificationToken = urlParams.get('token');
+            
+            if (verificationToken) {
+                // Handle email verification
+                verifyEmail(verificationToken);
+            }
+
+            
+        });
+
+    </script>
+
+{% endblock javascript %}

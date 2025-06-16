@@ -1,0 +1,180 @@
+{% extends "client/base.html" %}
+
+
+{% block css %}
+
+        .section {
+            display: block;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+        }
+
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+{% endblock css %}
+
+
+{% block nav_content %}
+
+    <nav class="navbar" style="width: 100%;">
+        <h2 id="pageTitle">Category List</h2>
+        <div class="user-info">
+            <button class="btn-primary" onclick="showAddTransactionModal()">Add New Category</button>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+{% endblock nav_content %}
+
+
+{% block content %}
+
+    <!-- Categories Section -->
+    <div class="section" id="categories" style="width: 100%;">
+                    
+        <div class="row" id="categoriesGrid">
+            <!-- Categories will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Add Category Modal -->
+    <div class="modal" id="addCategoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add Category</h3>
+                <button class="close-btn" onclick="closeModal('addCategoryModal')">&times;</button>
+            </div>
+            <form id="addCategoryForm">
+                <div class="form-group">
+                    <label for="categoryName">Category Name</label>
+                    <input type="text" id="categoryName" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="categoryDescription">Description</label>
+                    <textarea id="categoryDescription" name="description" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="categoryColor">Color</label>
+                    <input type="color" id="categoryColor" name="color" value="#4CAF50">
+                </div>
+                <button type="submit" class="btn btn-primary">Add Category</button>
+            </form>
+        </div>
+    </div>
+
+{% endblock content %}
+
+
+{% block javascript %}
+
+    <script>
+
+        async function loadCategories() {
+            try {
+                const response = await authenticatedFetch(`${API_BASE_URL}/v1/category/`);
+                if (response.ok) {
+                    categories = await response.json();
+                    renderCategoriesGrid(categories);
+                }
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        }
+
+        function renderCategoriesGrid(categories) {
+            const container = document.getElementById('categoriesGrid');
+            console.log("Categories=", categories)
+            if (!categories || categories.length === 0) {
+                container.innerHTML = '<p>No categories found. Create your first category!</p>';
+                return;
+            }
+
+            categories.forEach(category => {
+                const card = `
+                <div class="col-sm-6 col-md-4 col-lg-3 mb-4">
+                    <div class="card shadow-sm border-0" style="border-left: 4px solid ${category.color || '#4CAF50'};">
+                        <div class="card-body">
+                            <h5 class="card-title">${category.name}</h5>
+                            <p class="card-text text-muted fst-italic mb-0">Created at: ${new Date(category.created_at).toLocaleDateString() || '-'}</p>
+                        </div>
+                    </div>
+                </div>`;
+                container.innerHTML += card;
+            });
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if tokens and user info exist
+            const storedUserData = localStorage.getItem('userData');
+            const storedAccessToken = localStorage.getItem('accessToken');
+
+            if (storedUserData && storedAccessToken) {
+                // Parse user data
+                userData = JSON.parse(storedUserData);
+                accessToken = storedAccessToken;
+                refreshToken = localStorage.getItem('refreshToken');
+
+                // Hide login/register container, show dashboard
+                document.querySelector('.container').style.display = 'none';
+                // Assuming you have an element with id='dashboard'
+                document.getElementById('dashboard').classList.add('active');
+
+                // Update welcome text
+                document.getElementById('userWelcome').textContent = `Welcome back, ${userData.username}!`;
+
+                // Load dashboard data
+                showDashboard()
+                loadCategories()
+            } else {
+                // Show login form by default
+                showLogin();
+            }
+
+            // Check if there's a verification token in URL (for email verification)
+            const urlParams = new URLSearchParams(window.location.search);
+            const verificationToken = urlParams.get('token');
+            
+            if (verificationToken) {
+                // Handle email verification
+                verifyEmail(verificationToken);
+            }
+
+            
+        });
+
+    </script>
+
+{% endblock javascript %}
