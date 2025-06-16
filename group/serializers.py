@@ -57,10 +57,10 @@ class GroupCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         members = validated_data.pop('members', [])
-        # user = self.context['request'].user
+        user = self.context['request'].user
 
         # Hardcoding default user because AllowAny permission defined in view
-        user = CustomUser.objects.get(id=20)
+        # user = CustomUser.objects.get(id=user)
         validated_data['created_by'] = user
         group = Group.objects.create(**validated_data)
         group.members.set(members)
@@ -274,10 +274,10 @@ class EvenSplitExpenseCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         split_between = validated_data.pop("split_between", [])
-        # user = self.context['request'].user
+        user = self.context['request'].user
 
         # Hardcoding default user because AllowAny permission defined in view
-        user = CustomUser.objects.get(id=15)
+        # user = CustomUser.objects.get(id=15)
         validated_data["created_by"] = user
         expense = Expense.objects.create(**validated_data)
         amount_individual = validated_data["amount"] / len(split_between)
