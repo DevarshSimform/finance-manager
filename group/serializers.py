@@ -39,10 +39,11 @@ class GroupSerializer(serializers.ModelSerializer):
 
 
 class GroupListSerializer(serializers.ModelSerializer):
+    created_by = serializers.StringRelatedField()
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
     class Meta:
         model = Group
-        fields = "__all__"
+        fields = ['id', 'name', 'created_by', 'members', 'created_at']
 
 class GroupCreateSerializer(serializers.ModelSerializer):
     members = serializers.ListField(

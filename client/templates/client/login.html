@@ -1,72 +1,110 @@
-{% include "client/base.html" %}
+{% extends "client/base.html" %}
 
+{% block css %}
 
+    .form-container {
+        display: block;
+    }
 
-{% block content %}
+{% endblock css %}
 
+{% block auth_form %}
 
-    <div class="container d-flex justify-content-center align-items-center vh-100">
-        <div class="login-container card p-4 shadow-sm">
-        <h2 class="text-center mb-4">Login</h2>
-        <form method="post">
-            {% csrf_token %}
-            <div class="mb-3">
-            <label for="email-field" class="form-label">Email address</label>
-            <input type="email" class="form-control" id="email-field" name="email" placeholder="Enter your email" required>
-            </div>
-            <div class="mb-3">
-            <label for="password-field" class="form-label">Password</label>
-            <input type="password" class="form-control" id="password-field" name="password" placeholder="Enter your password" required>
-            </div>
-            <div class="d-grid">
-            <button type="submit" class="btn btn-primary">Login</button>
-            </div>
-            <p class="mt-3 text-center small">
-            Don't have an account? <a href="#">Register</a>
+        <!-- Login Form -->
+        <div class="form-container " id="loginForm">
+            <h2 class="form-title">Welcome Back</h2>
+            <p class="form-subtitle">Sign in to your account to continue</p>
+                    
+            <div id="loginAlert"></div>
+                    
+            <form id="loginFormSubmit">
+                <div class="form-group">
+                    <label for="loginEmail">Email Address</label>
+                    <input type="email" id="loginEmail" name="email" required>
+                </div>
+                        
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" name="password" required>
+                </div>
+                        
+                <button type="submit" class="btn" id="loginBtn">Sign In</button>
+            </form>
+                
+            <p class="link-text">
+                Don't have an account? <a href="/login/">Create one here</a>
             </p>
-        </form>
         </div>
-    </div>
 
-    <div class="container" id="output">
+{% endblock auth_form %}
 
-    </div>
+{% block dashboard %} {% endblock dashboard %}
 
+
+{% block javascript %}
 
     <script>
-        async function UserLogin(event) {
-            event.preventDefault(); // Prevent form from submitting the traditional way
 
-            const email = document.getElementById("email-field").value;
-            const password = document.getElementById("password-field").value;
+        // Login form handler
+        document.getElementById('loginFormSubmit').addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-            const response = await fetch('http://127.0.0.1:8000/api/auth/login/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    email: email,
-                    password: password
-                })
-            });
+            console.log("Login handle called")
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            const loginBtn = document.getElementById('loginBtn');
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Signing In...';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Store user data and tokens
+                    userData = data.user;
+                    accessToken = data.access;
+                    refreshToken = data.refresh;
 
-            const data = await response.json();
+                    console.log("User data= ",userData)
 
-            if (response.ok) {
-                // Store access token in cookie (expires in 1 day)
-                document.cookie = `access_token=${data.access}; path=/; max-age=86400;`;
-                window.location.href = `http://127.0.0.1:8000/home/`; 
+                    // Store in memory (you can also use sessionStorage if needed)
+                    // Note: localStorage is not available in Claude artifacts
+                    // Save to localStorage
+                    localStorage.setItem('userData', JSON.stringify(userData));
+                    localStorage.setItem('accessToken', accessToken);
+                    localStorage.setItem('refreshToken', refreshToken);
+                    
+                    showAlert('loginAlert', 'Login successful! Redirecting...', 'success');
+                    
+                    setTimeout(() => {
+                        // Redirect to dashboard overview page
+                        window.location.href = '/overview';
+                    }, 1500);
+                } else {
+                    showAlert('loginAlert', data.message || 'Invalid email or password.', 'error');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showAlert('loginAlert', 'Network error. Please check your connection and try again.', 'error');
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Sign In';
             }
-        }
-
-        // Attach the login function to the form submit
-        window.onload = function () {
-            document.querySelector('form').addEventListener('submit', UserLogin);
-        };
-
+        });
 
     </script>
 
-
-{% endblock %}
+{% endblock javascript %}

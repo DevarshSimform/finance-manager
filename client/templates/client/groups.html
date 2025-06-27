@@ -138,13 +138,20 @@
             }
 
             groups.forEach(group => {
-                const row = `<tr>
+                const row = document.createElement('tr');
+                row.setAttribute('data-id', group.id);
+                row.style.cursor = 'pointer';
+                row.innerHTML = `
                     <td>${group.name || '-'}</td>
                     <td>${group.created_by || 'Uncategorized'}</td>
                     <td>${formatDate(group.created_at) || 'Uncategorized'}</td>
                     <td>${group.members && group.members.length || 0} members</td>
-                </tr>`
-                tbody.innerHTML += row
+                `
+                row.addEventListener('click', () => {
+                    // Redirect to group detail page or do something else
+                    window.location.href = `/overview`;  
+                });
+                tbody.append(row)
             })
 
             function formatDate(dateString) {
@@ -181,8 +188,8 @@
                 showDashboard()
                 loadGroups()
             } else {
-                // Show login form by default
-                showLogin();
+                // Redirect to Login page
+                window.location.href = '/login'
             }
 
             // Check if there's a verification token in URL (for email verification)

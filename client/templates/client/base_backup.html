@@ -331,7 +331,6 @@
             
             <div class="right-panel">
                 <!-- Registration Form -->
-                {% block auth_form %}
                 <div class="form-container active" id="registerForm">
                     <h2 class="form-title">Create Account</h2>
                     <p class="form-subtitle">Join thousands of users managing their finances smarter</p>
@@ -363,7 +362,7 @@
                     </form>
                     
                     <p class="link-text">
-                        Already have an account? <a href="/login">Sign in here</a>
+                        Already have an account? <a href="#" onclick="showLogin()">Sign in here</a>
                     </p>
                 </div>
 
@@ -381,9 +380,11 @@
                     </p>
                     
                     <p class="link-text">
-                        <a href="/login">Back to login</a>
+                        <a href="#" onclick="showLogin()">Back to login</a>
                     </p>
                 </div>
+
+                {% block auth_form %}{% endblock auth_form %}
 
                 <!-- Login Form -->
                 <div class="form-container" id="loginForm">
@@ -410,14 +411,13 @@
                         Don't have an account? <a href="#" onclick="showRegister()">Create one here</a>
                     </p>
                 </div>
-                {% endblock auth_form %}
             </div>
         </div>
-    
-    {% block dashboard %}
-        <!-- Dashboard -->
+
+    <!-- Dashboard -->
     <div class="dashboard active" id="dashboard">
 
+        {% block sidebar %}
             <!-- Sidebar -->
             <div class="sidebar">
                 <div class="sidebar-header">
@@ -443,19 +443,19 @@
                     </a>
                 </nav>
             </div>
+        {% endblock sidebar %}
         
 
-            <!-- Main Content -->
-            <div class="main-content" style="width: 100%; max-width: 100%;">
+        <!-- Main Content -->
+        <div class="main-content" style="width: 100%; max-width: 100%;">
 
-            {% block nav_content %}{% endblock nav_content %}
+          {% block nav_content %}{% endblock nav_content %}
 
-            {% block content %}{% endblock content %}
-
-            </div>
+          {% block content %}{% endblock content %}
 
         </div>
-    {% endblock dashboard %}
+
+    </div>
 
       {% block javascript %}{% endblock javascript %}
 
@@ -470,6 +470,13 @@
         const API_BASE_URL = 'http://127.0.0.1:8000/api'; // Change this to your backend URL
 
         // Form switching functions
+        function showLogin() {
+            document.querySelectorAll('.form-container').forEach(form => {
+                form.classList.remove('active');
+            });
+            document.getElementById('loginForm').classList.add('active');
+        }
+
         function showRegister() {
             document.querySelectorAll('.form-container').forEach(form => {
                 form.classList.remove('active');
@@ -541,6 +548,67 @@
             }
         });
 
+        // Login form handler
+        document.getElementById('loginFormSubmit').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            console.log("Login handle called")
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            const loginBtn = document.getElementById('loginBtn');
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Signing In...';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Store user data and tokens
+                    userData = data.user;
+                    accessToken = data.access;
+                    refreshToken = data.refresh;
+
+                    console.log("User data= ",userData)
+
+                    // Store in memory (you can also use sessionStorage if needed)
+                    // Note: localStorage is not available in Claude artifacts
+                    // Save to localStorage
+                    localStorage.setItem('userData', JSON.stringify(userData));
+                    localStorage.setItem('accessToken', accessToken);
+                    localStorage.setItem('refreshToken', refreshToken);
+                    
+                    showAlert('loginAlert', 'Login successful! Redirecting...', 'success');
+                    
+                    setTimeout(() => {
+                        document.getElementById('userWelcome').textContent = `Welcome back, ${userData.username}!`;
+                        // Redirect to dashboard overview page
+                        window.location.href = '/overview';
+                    }, 1500);
+                } else {
+                    showAlert('loginAlert', data.message || 'Invalid email or password.', 'error');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showAlert('loginAlert', 'Network error. Please check your connection and try again.', 'error');
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Sign In';
+            }
+        });
+
         // logout function
         function logout() {
             // Clear tokens and user data
@@ -556,8 +624,7 @@
             document.getElementById('dashboard').classList.remove('active');
             document.querySelector('.container').style.display = 'flex';
 
-            // Redirect to Login page
-            window.location.href = '/login'
+            showLogin();
         }
 
         // Token refresh function (for future API calls)
@@ -627,15 +694,15 @@
                 
                 if (response.ok) {
                     showAlert('loginAlert', 'Email verified successfully! You can now login.', 'success');
-                    window.location.href = '/login'
+                    showLogin();
                 } else {
                     showAlert('loginAlert', 'Invalid or expired verification link.', 'error');
-                    window.location.href = '/login'
+                    showLogin();
                 }
             } catch (error) {
                 console.error('Email verification error:', error);
                 showAlert('loginAlert', 'Verification failed. Please try again.', 'error');
-                window.location.href = '/login'
+                showLogin();
             }
         }
 

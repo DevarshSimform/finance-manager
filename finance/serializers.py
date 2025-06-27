@@ -184,7 +184,7 @@ class TransactionSerializer(serializers.ModelSerializer):
 
         return kwargs
 
-    
+
 
 class TransactionDetailSerializer(serializers.ModelSerializer):
     """

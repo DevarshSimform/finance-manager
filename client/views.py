@@ -1,9 +1,6 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
 
 
-def home_page(request):
-    return render(request, 'client/overview.html')
 
 def overview(request):
     return render(request, 'client/overview.html')
@@ -20,10 +17,7 @@ def analytics(request):
 def list_group(request):
     return render(request, 'client/groups.html')
 
-
 def login_user(request):
-    if request.user.is_authenticated:
-        return redirect('overview')
     return render(request, 'client/login.html')
 
 def list_transaction(request):

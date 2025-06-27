@@ -260,8 +260,8 @@
                 showDashboard()
                 loadAnalytics()
             } else {
-                // Show login form by default
-                showLogin();
+                // Redirect to Login page
+                window.location.href = '/login'
             }
 
             // Check if there's a verification token in URL (for email verification)
