@@ -1,0 +1,31 @@
+{% extends "client/base.html" %}
+
+{% block css %}
+    .form-container {
+        display: block;
+    }
+{% endblock css %}
+
+{% block auth_form %}
+    <div class="form-container" id="redirectForm">
+        <h2 class="form-title">Redirecting...</h2>
+        <p class="form-subtitle">Please wait, you're being redirected to the registration page.</p>
+        
+        <div class="alert alert-info">
+            <strong>Please wait:</strong> You are being redirected to our new step-by-step registration process...
+        </div>
+    </div>
+{% endblock auth_form %}
+
+{% block dashboard %} {% endblock dashboard %}
+
+{% block javascript %}
+    <script>
+        // Redirect to step 1 of the registration wizard
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                window.location.href = '/register/step1';
+            }, 1000);
+        });
+    </script>
+{% endblock javascript %}

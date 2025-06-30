@@ -1,0 +1,176 @@
+{% extends "client/base.html" %}
+
+{% block css %}
+    .form-container {
+        display: block;
+    }
+    
+    .email-verification-container {
+        text-align: center;
+    }
+    
+    .email-icon {
+        font-size: 60px;
+        margin-bottom: 20px;
+        color: #4CAF50;
+    }
+    
+    .verification-message {
+        margin-bottom: 30px;
+        font-size: 18px;
+        color: #555;
+        line-height: 1.6;
+    }
+    
+    .btn {
+        background: #4CAF50;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 500;
+        width: 100%;
+        max-width: 300px;
+        margin-top: 20px;
+        transition: background-color 0.3s;
+    }
+    
+    .btn:hover {
+        background: #45a049;
+    }
+    
+    .resend-timer {
+        margin-top: 15px;
+        color: #666;
+        font-size: 14px;
+    }
+    
+    .separator {
+        margin: 30px auto;
+        width: 80%;
+        height: 1px;
+        background: #e1e1e1;
+    }
+{% endblock css %}
+
+{% block auth_form %}
+    <!-- Email Verification Page -->
+    <div class="form-container" id="emailVerificationForm">
+        <div class="email-verification-container">
+            <div class="email-icon">✉️</div>
+            <h2 class="form-title">Check Your Email</h2>
+            <p class="verification-message">
+                We've sent a verification link to your email address.<br>
+                Please click the link in the email to verify your account and complete the registration process.
+            </p>
+            
+            <div id="verificationAlert"></div>
+            
+            <div class="separator"></div>
+            
+            <p>Didn't receive the email?</p>
+            <p class="resend-timer" id="resendTimer">You can request a new verification email in <span id="timer">60</span> seconds</p>
+            <button class="btn" id="resendBtn" disabled>Resend Verification Email</button>
+            
+            <p class="link-text" style="margin-top: 30px;">
+                <a href="/login">Back to login</a>
+            </p>
+        </div>
+    </div>
+{% endblock auth_form %}
+
+{% block dashboard %} {% endblock dashboard %}
+
+{% block javascript %}
+    <script>
+        // Timer for resending verification email
+        document.addEventListener('DOMContentLoaded', () => {
+            let timeLeft = 60;
+            const timerElement = document.getElementById('timer');
+            const resendBtn = document.getElementById('resendBtn');
+            
+            const countdown = setInterval(() => {
+                timeLeft--;
+                timerElement.textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(countdown);
+                    document.getElementById('resendTimer').textContent = 'You can now request a new verification email';
+                    resendBtn.disabled = false;
+                }
+            }, 1000);
+        });
+        
+        // Resend verification handler
+        document.getElementById('resendBtn').addEventListener('click', async () => {
+            const email = sessionStorage.getItem('registrationEmail');
+            
+            if (!email) {
+                showAlert('verificationAlert', 'Email information not found. Please try registering again.', 'error');
+                setTimeout(() => {
+                    window.location.href = '/register/step1';
+                }, 2000);
+                return;
+            }
+            
+            const resendBtn = document.getElementById('resendBtn');
+            resendBtn.disabled = true;
+            resendBtn.textContent = 'Sending...';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/resend-verification/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('verificationAlert', 'Verification email sent successfully!', 'success');
+                    
+                    // Reset timer
+                    let timeLeft = 60;
+                    const timerElement = document.getElementById('timer');
+                    document.getElementById('resendTimer').textContent = `You can request a new verification email in <span id="timer">${timeLeft}</span> seconds`;
+                    
+                    const countdown = setInterval(() => {
+                        timeLeft--;
+                        timerElement.textContent = timeLeft;
+                        
+                        if (timeLeft <= 0) {
+                            clearInterval(countdown);
+                            document.getElementById('resendTimer').textContent = 'You can now request a new verification email';
+                            resendBtn.disabled = false;
+                            resendBtn.textContent = 'Resend Verification Email';
+                        }
+                    }, 1000);
+                } else {
+                    showAlert('verificationAlert', data.message || 'Failed to resend verification email.', 'error');
+                    resendBtn.disabled = false;
+                    resendBtn.textContent = 'Resend Verification Email';
+                }
+            } catch (error) {
+                console.error('Resend verification error:', error);
+                showAlert('verificationAlert', 'Network error. Please check your connection and try again.', 'error');
+                resendBtn.disabled = false;
+                resendBtn.textContent = 'Resend Verification Email';
+            }
+        });
+        
+        // Alert function
+        function showAlert(containerId, message, type) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+    </script>
+{% endblock javascript %}

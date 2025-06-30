@@ -1,0 +1,142 @@
+{% extends "client/base.html" %}
+
+{% block css %}
+    .form-container {
+        display: block;
+    }
+    
+    .btn {
+        background: #4CAF50;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 500;
+        width: 100%;
+        margin-top: 10px;
+        transition: background-color 0.3s;
+    }
+    
+    .btn:hover {
+        background: #45a049;
+    }
+    
+    .btn:disabled {
+        background: #cccccc;
+        cursor: not-allowed;
+    }
+    
+    .step-indicator {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 30px;
+    }
+    
+    .step {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #e1e1e1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 10px;
+        color: #666;
+        font-weight: 600;
+    }
+    
+    .step.active {
+        background: #4CAF50;
+        color: white;
+    }
+    
+    .step-line {
+        height: 3px;
+        background: #e1e1e1;
+        width: 50px;
+        margin-top: 15px;
+    }
+{% endblock css %}
+
+{% block auth_form %}
+    <!-- Step 1: Email Registration Form -->
+    <div class="form-container" id="registerStep1Form">
+        <h2 class="form-title">Create Account</h2>
+        <p class="form-subtitle">Step 1: Let's start with your email address</p>
+        
+        <div class="step-indicator">
+            <div class="step active">1</div>
+            <div class="step-line"></div>
+            <div class="step">2</div>
+        </div>
+        
+        <div id="emailAlert"></div>
+        
+        <form id="emailForm">
+            <div class="form-group">
+                <label for="regEmail">Email Address</label>
+                <input type="email" id="regEmail" name="email" required>
+            </div>
+            
+            <button type="submit" class="btn" id="emailNextBtn">Continue</button>
+        </form>
+        
+        <p class="link-text">
+            Already have an account? <a href="/login">Sign in here</a>
+        </p>
+    </div>
+{% endblock auth_form %}
+
+{% block dashboard %} {% endblock dashboard %}
+
+{% block javascript %}
+    <script>
+        // Email validation form handler
+        document.getElementById('emailForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('regEmail').value;
+            
+            const emailNextBtn = document.getElementById('emailNextBtn');
+            emailNextBtn.disabled = true;
+            emailNextBtn.textContent = 'Checking...';
+            
+            try {
+                // First check if email exists in the database
+                const response = await fetch(`${API_BASE_URL}/auth/check-email/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && !data.exists) {
+                    // Email is unique, store in session and proceed to step 2
+                    sessionStorage.setItem('registrationEmail', email);
+                    
+                    showAlert('emailAlert', 'Email verified! Proceeding to next step...', 'success');
+                    
+                    setTimeout(() => {
+                        // Redirect to step 2
+                        window.location.href = '/register/step2';
+                    }, 1500);
+                } else {
+                    showAlert('emailAlert', 'This email is already registered. Please use a different email or login.', 'error');
+                }
+            } catch (error) {
+                console.error('Email verification error:', error);
+                showAlert('emailAlert', 'Network error. Please check your connection and try again.', 'error');
+            } finally {
+                emailNextBtn.disabled = false;
+                emailNextBtn.textContent = 'Continue';
+            }
+        });
+    </script>
+{% endblock javascript %}

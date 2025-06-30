@@ -15,6 +15,22 @@ def analytics(request):
 def login_user(request):
     return render(request, 'client/login.html')
 
+def register_user(request):
+    """Main registration page that redirects to the first step"""
+    return render(request, 'client/register.html')
+
+def register_step1(request):
+    """First step of registration - Email input with uniqueness validation"""
+    return render(request, 'client/register_step1.html')
+
+def register_step2(request):
+    """Second step of registration - Username and password fields"""
+    return render(request, 'client/register_step2.html')
+
+def register_check_email(request):
+    """Final step - Email verification confirmation page"""
+    return render(request, 'client/register_check_email.html')
+
 def list_group(request):
     return render(request, 'client/groups.html')
 
