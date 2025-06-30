@@ -67,11 +67,13 @@ class ExpenseListCreateAPIView(ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        if self.request.user.is_superuser:
-            return Expense.objects.all()
-        return Expense.objects.filter(
+        queryset = Expense.objects.all() if self.request.user.is_superuser else Expense.objects.filter(
             Q(created_by=self.request.user) | Q(split_between__in=[self.request.user])
         ).distinct()
+        group_id = self.request.query_params.get("group")
+        if group_id:
+            queryset = queryset.filter(group=group_id)
+        return queryset
 
     def get_serializer_class(self):
         if self.request.method == 'POST':

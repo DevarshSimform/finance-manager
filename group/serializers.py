@@ -20,7 +20,7 @@ class GroupSerializer(serializers.ModelSerializer):
     members = serializers.SerializerMethodField()
     # This will work if Group model had a reverse relationship setup on GroupMember.group
     # members = GroupMemberSerializer(many=True, read_only=True)
-    created_by = serializers.PrimaryKeyRelatedField(read_only=True)
+    created_by = serializers.StringRelatedField()
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
 
     class Meta:

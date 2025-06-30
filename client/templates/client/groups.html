@@ -3,22 +3,6 @@
 
 {% block css %}
 
-        .btn-primary {
-            background: #4CAF50;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .btn-primary:hover {
-            background: #45a049;
-        }
-
         .section {
             display: block;
         }
@@ -75,8 +59,8 @@
     <nav class="navbar" style="width: 100%;">
         <h2 id="pageTitle">Group List</h2>
         <div class="user-info">
-            <button class="btn-primary" onclick="showAddTransactionModal()">Add New Group</button>
-            <button class="logout-btn" onclick="logout()">Logout</button>
+            <button class="btn btn-primary" onclick="showAddTransactionModal()">Add New Group</button>
+            <button class="btn btn-danger" onclick="logout()">Logout</button>
         </div>
     </nav>
 
@@ -149,7 +133,7 @@
                 `
                 row.addEventListener('click', () => {
                     // Redirect to group detail page or do something else
-                    window.location.href = `/overview`;  
+                    window.location.href = `/groups/${group.id}`;  
                 });
                 tbody.append(row)
             })

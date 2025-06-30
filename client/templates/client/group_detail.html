@@ -1,0 +1,208 @@
+{% extends "client/base.html" %}
+
+{% block css %}
+
+        .scrollable-chart {
+            max-height: 300px;      /* or any height you prefer */
+            overflow-y: auto;
+            padding-right: 10px;    /* optional: add space for scrollbar */
+        }
+
+        /* Optional: nicer scrollbar (WebKit only) */
+        .scrollable-chart::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .scrollable-chart::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
+        }
+
+{% endblock css %}
+
+
+{% block nav_content %}
+
+    <nav class="navbar" style="width: 100%;">
+        <h2 id="pageTitle">Group Detail</h2>
+        <div class="user-info">
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+{% endblock nav_content %}
+
+
+{% block content %}
+
+<div class="container-fluid mt-4 ps-4 pe-4">
+
+    <!-- Group Info -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+        <div>
+            <h2 id="group-name">Group Name</h2>
+            <p class="text-muted mb-1">
+                <strong>Created by:</strong> <span id="group-created-by">Loading...</span>
+                &nbsp; | &nbsp;
+                <strong>Created at:</strong> <span id="group-created-at">Loading...</span>
+            </p>
+            <p class="text-muted">
+                <strong>Total Members:</strong> <span id="group-member-count">0</span>
+            </p>
+        </div>
+        <div>
+            <a href="#" id="add-expense-btn" class="btn btn-primary">Add Expense</a>
+        </div>
+    </div>
+
+    <!-- Members Section -->
+    <h4 class="mb-3">👥 Members</h4>
+    <ul class="list-group mb-5" id="member-list">
+        <!-- Populated by JavaScript -->
+    </ul>
+
+
+    <!-- Expenses Section -->
+    <h4 class="mb-3">💸 Expenses</h4>
+    <div class="scrollable-chart table-responsive">
+        <table class="table">
+            <thead class="thead-dark">
+                <tr>
+                    <th scope="col">Description</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">Created At</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="expense-list">
+                <!-- Populated by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock content %}
+
+
+{% block javascript %}
+
+    <script>
+
+        async function loadGroupDetail() {
+            const pathParts = window.location.pathname.split("/").filter(Boolean);
+            const groupId = pathParts[pathParts.length - 1];
+            try {
+                const response = await authenticatedFetch(`${API_BASE_URL}/v1/group/${groupId}`);
+                if (response.ok) {
+                    group = await response.json();
+                    renderGroupInfo(group);
+                    renderMembers(group.members);
+                    const expenses = await fetchGroupExpenses(groupId);
+                    renderExpenses(expenses);
+                }
+            } catch (error) {
+                console.error('Error loading groups:', error);
+            }
+        }
+
+        function renderGroupInfo(group) {
+            document.getElementById("group-name").textContent = group.name;
+            document.getElementById("group-created-by").textContent = group.created_by;
+            document.getElementById("group-created-at").textContent = formatDate(group.created_at);
+            document.getElementById("group-member-count").textContent = group.members.length;
+            document.getElementById("add-expense-btn").href = `add new expense create endpoint`;
+        }
+
+        function renderMembers(members) {
+            const memberList = document.getElementById("member-list");
+            memberList.innerHTML = "";
+            members.forEach(m => {
+                const user = m.user;
+                const item = document.createElement("li");
+                item.className = "list-group-item d-flex justify-content-between align-items-center";
+                item.innerHTML = `
+                    <span>${user.username}</span>
+                `;
+                memberList.appendChild(item);
+            });
+        }
+
+        async function fetchGroupExpenses(groupId) {
+            const response = await authenticatedFetch(`${API_BASE_URL}/v1/expense/?group=${groupId}`);
+            if (!response.ok) return [];
+            return await response.json();
+        }
+
+        function renderExpenses(expenses) {
+            const tbody = document.getElementById("expense-list");
+            tbody.innerHTML = "";
+            if (!expenses || expenses.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No expenses found in this group.</td></tr>`;
+                return;
+            }
+
+            expenses.forEach(expense => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td class="align-middle">${expense.description}</td>
+                    <td class="align-middle">₹${expense.amount}</td>
+                    <td class="align-middle">${formatDate(expense.created_at)}</td>
+                    <td class="align-middle">
+                        <a href="/expenses/${expense.id}/edit" class="btn btn-success">✏️ Edit</a>
+                    </td>
+                `;
+                tbody.append(row);
+            });
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString("en-IN", {
+                year: "numeric",
+                month: "short",
+                day: "numeric"
+            });
+        }
+
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if tokens and user info exist
+            const storedUserData = localStorage.getItem('userData');
+            const storedAccessToken = localStorage.getItem('accessToken');
+
+            if (storedUserData && storedAccessToken) {
+                // Parse user data
+                userData = JSON.parse(storedUserData);
+                accessToken = storedAccessToken;
+                refreshToken = localStorage.getItem('refreshToken');
+
+                // Hide login/register container, show dashboard
+                document.querySelector('.container').style.display = 'none';
+                // Assuming you have an element with id='dashboard'
+                document.getElementById('dashboard').classList.add('active');
+
+                // Update welcome text
+                document.getElementById('userWelcome').textContent = `Welcome back, ${userData.username}!`;
+
+                // Load dashboard data
+                showDashboard()
+                loadGroupDetail()
+            } else {
+                // Redirect to Login page
+                window.location.href = '/login'
+            }
+
+            // Check if there's a verification token in URL (for email verification)
+            const urlParams = new URLSearchParams(window.location.search);
+            const verificationToken = urlParams.get('token');
+            
+            if (verificationToken) {
+                // Handle email verification
+                verifyEmail(verificationToken);
+            }
+
+        });
+
+    </script>
+
+{% endblock javascript %}

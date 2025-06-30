@@ -1,7 +1,5 @@
 from django.shortcuts import render, redirect
 
-
-
 def overview(request):
     return render(request, 'client/overview.html')
 
@@ -14,14 +12,17 @@ def render_date_wise_transaction(request):
 def analytics(request):
     return render(request, 'client/analytics.html')
 
-def list_group(request):
-    return render(request, 'client/groups.html')
-
 def login_user(request):
     return render(request, 'client/login.html')
+
+def list_group(request):
+    return render(request, 'client/groups.html')
 
 def list_transaction(request):
     return render(request, 'client/transactions.html')
 
 def list_category(request):
     return render(request, 'client/categories.html')
+
+def get_group_detail(request, group_id):
+    return render(request, 'client/group_detail.html', {'id': group_id})
