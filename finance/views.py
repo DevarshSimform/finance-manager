@@ -163,6 +163,17 @@ class BalanceViewAPIView(APIView):
         return Response({'total-balance': balance}, status=status.HTTP_200_OK)
     
 
+class MonthlyIncomeExpense(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        m_income = request.user.monthly_income
+        m_expense = request.user.monthly_expense
+        return Response({'monthly-income': m_income, 'monthly-expense': m_expense}, status=status.HTTP_200_OK)
+    
+
 
 class RequestPasswordReset(GenericAPIView):
     """

@@ -1,10 +1,8 @@
 import requests
-import json
 import logging
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.contrib import messages
-from django.conf import settings
 from formtools.wizard.views import SessionWizardView
 
 from .forms import EmailForm, UserRegistrationForm
@@ -13,17 +11,14 @@ logger = logging.getLogger(__name__)
 
 class RegistrationWizard(SessionWizardView):
     form_list = [EmailForm, UserRegistrationForm]
-    template_name = 'client/wizard_form.html'
+    template_name = 'client/register_user_wizard/wizard_form.html'
     
-    # Define the API endpoint (this should be configured in settings.py)
-    API_REGISTER_ENDPOINT = getattr(settings, 'API_REGISTER_ENDPOINT', '/api/auth/register/')
-
     def get_template_names(self):
         # Return template for current step
         if self.steps.current == '0':
-            return ['client/register_step1.html']
+            return ['client/register_user_wizard/register_step1.html']
         elif self.steps.current == '1':
-            return ['client/register_step2.html']
+            return ['client/register_user_wizard/register_step2.html']
         return [self.template_name]
 
     def get_context_data(self, form, **kwargs):

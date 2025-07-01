@@ -10,6 +10,8 @@ urlpatterns = [
     path('transactions/<uuid:pk>/', views.TransactionRetrieveUpdateDestroyAPIView.as_view()),
     path('balance/', views.BalanceViewAPIView.as_view()),
 
+    path('monthly-income-expense/', views.MonthlyIncomeExpense.as_view()),
+
     path('category/', views.CategoryListCreateAPIView.as_view()),
     path('category/<uuid:pk>/', views.CategoryRetrieveUpdateDestroyAPIView.as_view()),
 

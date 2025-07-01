@@ -69,6 +69,14 @@ class CustomUser(AbstractUser):
         total_amount = self.transactions.aggregate(total=models.Sum('amount'))['total']
         return total_amount or 0
     
+    @property
+    def monthly_income(self):
+        return self.transactions.filter(type='income').aggregate(total=models.Sum('amount'))['total'] or 0
+    
+    @property
+    def monthly_expense(self):
+        return self.transactions.filter(type='expense').aggregate(total=models.Sum('amount'))['total'] or 0
+    
 
 
 class Category(DateTimeMixin):

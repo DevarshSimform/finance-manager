@@ -17,19 +17,19 @@ def login_user(request):
 
 def register_user(request):
     """Main registration page that redirects to the first step"""
-    return render(request, 'client/register.html')
+    return render(request, 'client/register_user_wizard/register.html')
 
 def register_step1(request):
     """First step of registration - Email input with uniqueness validation"""
-    return render(request, 'client/register_step1.html')
+    return render(request, 'client/register_user_wizard/register_step1.html')
 
 def register_step2(request):
     """Second step of registration - Username and password fields"""
-    return render(request, 'client/register_step2.html')
+    return render(request, 'client/register_user_wizard/register_step2.html')
 
 def register_check_email(request):
     """Final step - Email verification confirmation page"""
-    return render(request, 'client/register_check_email.html')
+    return render(request, 'client/register_user_wizard/register_check_email.html')
 
 def list_group(request):
     return render(request, 'client/groups.html')

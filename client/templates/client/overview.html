@@ -33,7 +33,7 @@
             <div class="card shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title">Total Balance</h5>
-                    <p class="h3 text-success" id="totalBalance">$12,450.00</p>
+                    <p class="h3 text-success" id="totalBalance">Rs. </p>
                 </div>
             </div>
         </div>
@@ -41,7 +41,7 @@
             <div class="card shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title">Monthly Income</h5>
-                    <p class="h3 text-success" id="monthlyIncome">$5,200.00</p>
+                    <p class="h3 text-success" id="monthlyIncome">Rs. </p>
                 </div>
             </div>
         </div>
@@ -49,7 +49,7 @@
             <div class="card shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title">Monthly Expenses</h5>
-                    <p class="h3 text-danger" id="monthlyExpenses">$3,150.00</p>
+                    <p class="h3 text-danger" id="monthlyExpenses">Rs. </p>
                 </div>
             </div>
         </div>
@@ -97,8 +97,42 @@
     async function loadOverviewData() {
         try {
             loadTransactions();
+            loadTotalBalance();
+            loadMonthlyExchange();
         } catch (error) {
             console.error('Error loading overview data:', error);
+        }
+    }
+
+    async function loadTotalBalance() {
+        try {
+            const response = await authenticatedFetch(`${API_BASE_URL}/v1/balance/`);
+            if (response.ok) {
+                const balance = await response.json();
+                console.log(balance)
+                const balanceBox = document.getElementById('totalBalance')
+                balanceBox.innerHTML += balance['total-balance']
+                balanceBox.innerHTML += '/-';
+            }
+        } catch (error) {
+            console.error('Error loading total balance:', error);
+        }
+    }
+
+    async function loadMonthlyExchange() {
+        try {
+            const response = await authenticatedFetch(`${API_BASE_URL}/v1/monthly-income-expense/`);
+            if (response.ok) {
+                const monthly_exchange = await response.json();
+                const monthly_income = document.getElementById('monthlyIncome')
+                const monthly_expense = document.getElementById('monthlyExpenses')
+                monthly_income.innerHTML += monthly_exchange['monthly-income']
+                monthly_income.innerHTML += '/-'
+                monthly_expense.innerHTML += monthly_exchange['monthly-expense']
+                monthly_expense.innerHTML += '/-'
+            }
+        } catch (error) {
+            console.error('Error loading transactions:', error);
         }
     }
 
