@@ -1,4 +1,6 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render
+from client.forms import GroupCreateForm
+
 
 def overview(request):
     return render(request, 'client/overview.html')
@@ -33,6 +35,10 @@ def register_check_email(request):
 
 def list_group(request):
     return render(request, 'client/groups.html')
+
+def group_create_view(request):
+    form = GroupCreateForm()
+    return render(request, 'client/group_create.html', {'form': form})
 
 def list_transaction(request):
     return render(request, 'client/transactions.html')

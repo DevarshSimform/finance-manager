@@ -57,7 +57,7 @@ class RegistrationWizard(SessionWizardView):
             response = requests.post(
                 'http://127.0.0.1:8000/api/auth/register/',
                 json=registration_data,
-                headers={
+                headers={   
                     'Content-Type': 'application/json'
                 },
                 timeout=10  # Set a timeout for the request

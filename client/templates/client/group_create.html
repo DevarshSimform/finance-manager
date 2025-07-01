@@ -1,0 +1,106 @@
+{% extends "client/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block css %}
+  <!-- Your custom styles -->
+
+
+  <!-- Select2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+{% endblock css %}
+
+
+{% block nav_content %}
+<nav class="navbar navbar-expand-lg navbar-light bg-light px-4">
+    <h2 class="navbar-brand m-0" id="pageTitle">Create Group</h2>
+    <div class="ms-auto">
+        <button class="btn btn-danger" onclick="logout()">Logout</button>
+    </div>
+</nav>
+{% endblock nav_content %}
+
+
+{% block content %}
+  <style>
+    .centered-container {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center; /* horizontal center */
+      align-items: center;     /* vertical center */
+    }
+    .form-wrapper {
+      width: 100%;
+      max-width: 480px;
+      padding: 2rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 4px 10px rgb(0 0 0 / 0.1);
+    }
+  </style>
+<div class="centered-container">
+  <div class="form-wrapper">
+    <h2 class="mb-4 text-center">Create Group (AJAX)</h2>
+
+    <form id="groupForm" novalidate>
+      {% csrf_token %}
+      {{ form|crispy }}
+
+      <div class="d-flex justify-content-end">
+        <button type="submit" class="btn btn-primary px-4">
+          Create Group
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block javascript %}
+  <!-- jQuery (required by Select2) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Select2 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+  <script>
+
+    function createGroup() {
+      try {
+        const response = await authenticatedFetch(`${API_BASE_URL}/v1/group/`)
+        if (response.ok) {
+          console.log('group created')
+        }
+      } catch (error)
+      console.error('Error in creating group:', error)
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const storedUserData = localStorage.getItem('userData');
+        const storedAccessToken = localStorage.getItem('accessToken');
+
+        if (storedUserData && storedAccessToken) {
+            userData = JSON.parse(storedUserData);
+            accessToken = storedAccessToken;
+            refreshToken = localStorage.getItem('refreshToken');
+
+            document.querySelector('.container').style.display = 'none';
+            document.getElementById('dashboard').classList.add('active');
+            document.getElementById('userWelcome').textContent = `Welcome back, ${userData.username}!`;
+
+            loadOverviewData();
+        } else {
+            window.location.href = '/login';
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const verificationToken = urlParams.get('token');
+        if (verificationToken) {
+            verifyEmail(verificationToken);
+        }
+    });
+
+
+  </script>
+{% endblock %}

@@ -1,6 +1,11 @@
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Field, Submit, Div
+
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.db.models import Q
+from group.models import Group
 
 User = get_user_model()
 
@@ -61,3 +66,27 @@ class UserRegistrationForm(forms.Form):
             self.add_error('confirm_password', "Passwords do not match.")
 
         return cleaned_data
+
+class GroupCreateForm(forms.ModelForm):
+    members = forms.ModelMultipleChoiceField(
+        queryset=User.objects.filter(is_active=True).exclude(email='AnonymousUser'),
+        widget=forms.SelectMultiple(attrs={'class': 'form-select', 'id': 'id_users'}),
+        label="Select Members"
+    )
+
+    class Meta:
+        model = Group
+        fields = ['name', 'members']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_id = 'groupForm'
+        self.helper.form_method = 'post'
+        self.helper.form_tag = False  # form tag in template
+
+        self.helper.layout = Layout(
+            Field('name', css_class='mb-3'),
+            Field('members', css_class='mb-3'),
+        )

@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'corsheaders',
     'formtools',
+    'crispy_forms',
+    'crispy_bootstrap4',
     'finance',
     'authentication',
     'developersOnly',
@@ -56,6 +58,8 @@ INSTALLED_APPS = [
     'client',
     'group',
 ]
+
+CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
