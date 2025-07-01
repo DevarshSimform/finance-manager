@@ -69,18 +69,17 @@
 {% endblock css %}
 
 {% block auth_form %}
-    <!-- Step 1: Email Registration Form -->
-    <div class="form-container" id="registerStep1Form">
+    <div class="form-container" id="wizardForm">
         <h2 class="form-title">Create Account</h2>
-        <p class="form-subtitle">Step 1: Let's start with your email address</p>
+        <p class="form-subtitle">{{ step_title|default:"Registration" }}</p>
         
         <div class="step-indicator">
-            <div class="step active">1</div>
+            <div class="step {% if wizard.steps.current == '0' %}active{% endif %}">1</div>
             <div class="step-line"></div>
-            <div class="step">2</div>
+            <div class="step {% if wizard.steps.current == '1' %}active{% endif %}">2</div>
         </div>
         
-        <div id="emailAlert">
+        <div id="wizardAlert">
             {% if form.errors %}
                 <div class="alert alert-error">
                     Please correct the error{{ form.errors|length|pluralize }} below.
@@ -88,21 +87,28 @@
             {% endif %}
         </div>
         
-        <form id="emailForm" method="post" action="{% url 'registration_wizard' %}">
+        <form id="wizardStepForm" method="post" action="">
             {% csrf_token %}
             {{ wizard.management_form }}
             
-            <div class="form-group">
-                <label for="{{ form.email.id_for_label }}">Email Address</label>
-                {{ form.email }}
-                {{ form.email.errors }}
-            </div>
+            {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {{ field.errors }}
+                </div>
+            {% endfor %}
             
-            <button type="submit" class="btn" id="emailNextBtn">Continue</button>
+            {% if wizard.steps.prev %}
+                <button type="submit" class="btn" style="width: 48%; float: left; margin-right: 4%" name="wizard_goto_step" value="{{ wizard.steps.prev }}">Previous</button>
+                <button type="submit" class="btn" style="width: 48%;" name="wizard_submit" value="Submit">Create Account</button>
+            {% else %}
+                <button type="submit" class="btn" name="wizard_submit" value="Submit">Continue</button>
+            {% endif %}
         </form>
         
         <p class="link-text">
-            Already have an account? <a href="{% url 'login_user' %}">Sign in</a>
+            Already have an account? <a href="{% url 'login_user' %}">Sign in here</a>
         </p>
     </div>
 {% endblock auth_form %}
@@ -112,10 +118,13 @@
 {% block javascript %}
     <script>
         // Disable button during submission to prevent double clicks
-        document.getElementById('emailForm').addEventListener('submit', function() {
-            const emailNextBtn = document.getElementById('emailNextBtn');
-            emailNextBtn.disabled = true;
-            emailNextBtn.textContent = 'Processing...';
+        document.getElementById('wizardStepForm').addEventListener('submit', function() {
+            document.querySelectorAll('button[type="submit"]').forEach(button => {
+                button.disabled = true;
+                if (button.name === 'wizard_submit') {
+                    button.textContent = 'Processing...';
+                }
+            });
         });
     </script>
 {% endblock javascript %}

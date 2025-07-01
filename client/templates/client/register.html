@@ -21,10 +21,10 @@
 
 {% block javascript %}
     <script>
-        // Redirect to step 1 of the registration wizard
+        // Redirect to the registration wizard
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
-                window.location.href = '/register/step1';
+                window.location.href = '{% url "registration_wizard" %}';
             }, 1000);
         });
     </script>

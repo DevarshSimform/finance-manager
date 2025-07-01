@@ -1,8 +1,14 @@
 from django.urls import path
 from client import views
+from client.wizard import RegistrationWizard
+from client.forms import EmailForm, UserRegistrationForm
+
+# Registration wizard forms
+registration_forms = [EmailForm, UserRegistrationForm]
 
 urlpatterns = [
     
+    path('', views.overview, name='overview'),
     path('overview/', views.overview, name='overview'),
     path('categories/', views.list_category, name='categories'),
     path('transactions/', views.list_transaction, name='transactions'),
@@ -15,9 +21,14 @@ urlpatterns = [
 
     path('login/', views.login_user, name='login_user'),
     path('register/', views.register_user, name='register_user'),
+
+    # Registration wizard URLs
+    path('register/wizard/', RegistrationWizard.as_view(form_list=registration_forms), name='registration_wizard'),
+
+    # Keep the original URLs for backward compatibility
     path('register/step1/', views.register_step1, name='register_step1'),
     path('register/step2/', views.register_step2, name='register_step2'),
     path('register/check-email/', views.register_check_email, name='register_check_email'),
-
+    
 ]
 

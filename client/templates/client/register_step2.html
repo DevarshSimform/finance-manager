@@ -1,0 +1,145 @@
+{% extends "client/base.html" %}
+
+{% block css %}
+    .form-container {
+        display: block;
+    }
+    
+    .btn {
+        background: #4CAF50;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 500;
+        width: 100%;
+        margin-top: 10px;
+        transition: background-color 0.3s;
+    }
+    
+    .btn:hover {
+        background: #45a049;
+    }
+    
+    .btn:disabled {
+        background: #cccccc;
+        cursor: not-allowed;
+    }
+    
+    .step-indicator {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 30px;
+    }
+    
+    .step {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #e1e1e1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 10px;
+        color: #666;
+        font-weight: 600;
+    }
+    
+    .step.active {
+        background: #4CAF50;
+        color: white;
+    }
+    
+    .step-line {
+        height: 3px;
+        background: #e1e1e1;
+        width: 50px;
+        margin-top: 15px;
+    }
+    
+    .user-email {
+        background-color: #f8f9fa;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        color: #666;
+    }
+    
+    .errorlist {
+        color: #dc3545;
+        list-style: none;
+        padding-left: 0;
+        margin-bottom: 15px;
+        font-size: 14px;
+    }
+{% endblock css %}
+
+{% block auth_form %}
+    <!-- Step 2: Username and Password Registration Form -->
+    <div class="form-container" id="registerStep2Form">
+        <h2 class="form-title">Create Account</h2>
+        <p class="form-subtitle">Step 2: Choose your username and password</p>
+        
+        <div class="step-indicator">
+            <div class="step">1</div>
+            <div class="step-line"></div>
+            <div class="step active">2</div>
+        </div>
+        
+        <div class="user-email">
+            <strong>Email:</strong> {{ email }}
+        </div>
+        
+        <div id="userDetailsAlert">
+            {% if form.errors %}
+                <div class="alert alert-error">
+                    Please correct the error{{ form.errors|length|pluralize }} below.
+                </div>
+            {% endif %}
+        </div>
+        
+        <form id="userDetailsForm" method="post" action="{% url 'registration_wizard' %}">
+            {% csrf_token %}
+            {{ wizard.management_form }}
+            
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label }}">Username</label>
+                {{ form.username }}
+                {{ form.username.errors }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.password.id_for_label }}">Password</label>
+                {{ form.password }}
+                {{ form.password.errors }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.confirm_password.id_for_label }}">Confirm Password</label>
+                {{ form.confirm_password }}
+                {{ form.confirm_password.errors }}
+            </div>
+            
+            <button type="submit" class="btn" id="registerBtn">Create Account</button>
+        </form>
+        
+        <p class="link-text">
+            Already have an account? <a href="{% url 'login_user' %}">Sign in</a>
+        </p>
+    </div>
+{% endblock auth_form %}
+
+{% block dashboard %} {% endblock dashboard %}
+
+{% block javascript %}
+    <script>
+        // Disable button during submission to prevent double clicks
+        document.getElementById('userDetailsForm').addEventListener('submit', function() {
+            const registerBtn = document.getElementById('registerBtn');
+            registerBtn.disabled = true;
+            registerBtn.textContent = 'Creating Account...';
+        });
+    </script>
+{% endblock javascript %}
