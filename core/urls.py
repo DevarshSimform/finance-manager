@@ -30,6 +30,8 @@ urlpatterns = [
     path('api/v1/', include('group.urls')),
 
 
+    path('select2/', include('django_select2.urls')),
+
     # Swagger UI:
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),

@@ -4,9 +4,6 @@
 {% block css %}
   <!-- Your custom styles -->
 
-
-  <!-- Select2 CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 {% endblock css %}
 
 
@@ -22,28 +19,73 @@
 
 {% block content %}
   <style>
+    /* Full viewport flex container to center content */
     .centered-container {
       min-height: 100vh;
       display: flex;
-      justify-content: center; /* horizontal center */
-      align-items: center;     /* vertical center */
+      justify-content: center;  /* horizontal center */
+      align-items: center;      /* vertical center */
+      background-color: #f8f9fa; /* light gray background for contrast */
+      padding: 1rem;            /* small padding around */
     }
+
+    /* Form wrapper with max width, padding, border and shadow */
     .form-wrapper {
       width: 100%;
       max-width: 480px;
-      padding: 2rem;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      background: #fff;
-      box-shadow: 0 4px 10px rgb(0 0 0 / 0.1);
+      padding: 2.5rem 2rem;
+      border-radius: 10px;
+      background-color: #fff;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      box-sizing: border-box;
+    }
+
+    /* Centered form heading */
+    .form-wrapper h2 {
+      margin-bottom: 2rem;
+      font-weight: 600;
+      font-size: 1.8rem;
+      text-align: center;
+      color: #212529;
+    }
+
+    /* Style the form fields to have consistent spacing */
+    #groupForm .form-control, #groupForm select {
+      border-radius: 6px;
+      border: 1px solid #ced4da;
+      padding: 0.5rem 0.75rem;
+      font-size: 1rem;
+      color: #495057;
+      box-sizing: border-box;
+    }
+
+    /* Form fields margin */
+    #groupForm .mb-3 {
+      margin-bottom: 1.5rem !important;
+    }
+
+    /* Style the submit button */
+    #groupForm button[type="submit"] {
+      font-weight: 600;
+      font-size: 1.1rem;
+      padding: 0.6rem 1.5rem;
+      border-radius: 6px;
+      border: none;
+    }
+
+    /* Optional: Make select2 dropdown input fill container */
+    .select2-container {
+      width: 100% !important;
     }
   </style>
+
 <div class="centered-container">
   <div class="form-wrapper">
-    <h2 class="mb-4 text-center">Create Group (AJAX)</h2>
+    <h2 class="mb-4 text-center">Create Group</h2>
 
     <form id="groupForm" novalidate>
       {% csrf_token %}
+      {{ form.media }}
       {{ form|crispy }}
 
       <div class="d-flex justify-content-end">
@@ -59,21 +101,44 @@
 
 
 {% block javascript %}
-  <!-- jQuery (required by Select2) -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <!-- Select2 JS -->
-  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
   <script>
 
-    function createGroup() {
+    async function createGroup(event) {
+      event.preventDefault();
+
+      const name = document.querySelector('#id_name').value.trim();
+      const userSelect = document.querySelector('#id_users');
+      const members = Array.from(userSelect.selectedOptions).map(option => option.value);
+      console.log(members)
+
+      const data = {
+        name: name,
+        members: members  // Assuming the backend expects a key `users` or `members`
+      };
+
       try {
-        const response = await authenticatedFetch(`${API_BASE_URL}/v1/group/`)
+        const response = await fetch(`${API_BASE_URL}/v1/group/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+          },
+          body: JSON.stringify(data)
+        });
+
         if (response.ok) {
-          console.log('group created')
+          const result = await response.json();
+          console.log('Group created:', result);
+          window.location.href = '/groups/';
+        } else {
+          const errorData = await response.json();
+          console.error('Group creation failed:', errorData);
+          alert('Failed to create group: ' + (errorData.detail || 'Unknown error'));
         }
-      } catch (error)
-      console.error('Error in creating group:', error)
+      } catch (error) {
+        console.error('Network error:', error);
+        alert('Network error. Please try again.');
+      }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -85,14 +150,17 @@
             accessToken = storedAccessToken;
             refreshToken = localStorage.getItem('refreshToken');
 
-            document.querySelector('.container').style.display = 'none';
-            document.getElementById('dashboard').classList.add('active');
             document.getElementById('userWelcome').textContent = `Welcome back, ${userData.username}!`;
 
-            loadOverviewData();
-        } else {
-            window.location.href = '/login';
-        }
+            $('#id_users').select2({
+              theme: 'bootstrap-5'
+            });
+
+            // Hook up form submission
+            document.getElementById('groupForm').addEventListener('submit', createGroup);
+            } else {
+                window.location.href = '/login';
+            }
 
         const urlParams = new URLSearchParams(window.location.search);
         const verificationToken = urlParams.get('token');
@@ -100,7 +168,6 @@
             verifyEmail(verificationToken);
         }
     });
-
 
   </script>
 {% endblock %}

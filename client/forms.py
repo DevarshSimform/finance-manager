@@ -2,6 +2,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field, Submit, Div
 
 from django import forms
+from django_select2.forms import Select2MultipleWidget, ModelSelect2MultipleWidget
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -67,11 +68,27 @@ class UserRegistrationForm(forms.Form):
 
         return cleaned_data
 
+
+class CustomUserSelect2Widget(ModelSelect2MultipleWidget):
+    model = User
+    search_fields = [
+        'first_name__icontains',
+        'last_name__icontains',
+        'username__icontains',
+        'email__icontains',
+    ]
+
 class GroupCreateForm(forms.ModelForm):
     members = forms.ModelMultipleChoiceField(
-        queryset=User.objects.filter(is_active=True).exclude(email='AnonymousUser'),
-        widget=forms.SelectMultiple(attrs={'class': 'form-select', 'id': 'id_users'}),
-        label="Select Members"
+        queryset=User.objects.filter(is_active=True).exclude(email='AnonymousUser').order_by('first_name', 'last_name'),
+        widget=CustomUserSelect2Widget(
+            attrs={
+            'data-placeholder': 'Search users...',
+            'data-minimum-input-length': 1,
+            'data-delay': 300,
+            'id': 'id_users',
+        }
+        )
     )
 
     class Meta:
@@ -81,6 +98,7 @@ class GroupCreateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # self.fields['members'].label_from_instance = lambda obj: f"{obj.get_full_name()} ({obj.email})"
         self.helper = FormHelper()
         self.helper.form_id = 'groupForm'
         self.helper.form_method = 'post'

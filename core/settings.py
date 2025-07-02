@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'corsheaders',
     'formtools',
+    'django_select2',
     'crispy_forms',
     'crispy_bootstrap4',
     'finance',
