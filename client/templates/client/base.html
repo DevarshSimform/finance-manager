@@ -471,56 +471,6 @@
             }, 5000);
         }
 
-        // Registration form handler
-        document.getElementById('registrationForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = document.getElementById('regEmail').value;
-            const username = document.getElementById('regUsername').value;
-            const password = document.getElementById('regPassword').value;
-            const confirmPassword = document.getElementById('regConfirmPassword').value;
-            
-            if (password !== confirmPassword) {
-                showAlert('registerAlert', 'Passwords do not match!', 'error');
-                return;
-            }
-            
-            const registerBtn = document.getElementById('registerBtn');
-            registerBtn.disabled = true;
-            registerBtn.textContent = 'Creating Account...';
-            
-            try {
-                const response = await fetch(`${API_BASE_URL}/auth/register/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        email: email,
-                        username: username,
-                        password: password
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    showAlert('registerAlert', 'Account created successfully! Please check your email for verification.', 'success');
-                    setTimeout(() => {
-                        showVerification();
-                    }, 2000);
-                } else {
-                    showAlert('registerAlert', data.message || 'Registration failed. Please try again.', 'error');
-                }
-            } catch (error) {
-                console.error('Registration error:', error);
-                showAlert('registerAlert', 'Network error. Please check your connection and try again.', 'error');
-            } finally {
-                registerBtn.disabled = false;
-                registerBtn.textContent = 'Create Account';
-            }
-        });
-
         // logout function
         function logout() {
             // Clear tokens and user data

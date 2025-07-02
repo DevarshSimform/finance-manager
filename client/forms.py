@@ -84,10 +84,10 @@ class GroupCreateForm(forms.ModelForm):
         widget=CustomUserSelect2Widget(
             attrs={
             'data-placeholder': 'Search users...',
-            'data-minimum-input-length': 1,
+            'data-minimum-input-length': 2,
             'data-delay': 300,
             'id': 'id_users',
-        }
+            }
         )
     )
 

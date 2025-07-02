@@ -19,7 +19,6 @@
 
 {% block content %}
   <style>
-    /* Full viewport flex container to center content */
     .centered-container {
       min-height: 100vh;
       display: flex;
@@ -28,8 +27,6 @@
       background-color: #f8f9fa; /* light gray background for contrast */
       padding: 1rem;            /* small padding around */
     }
-
-    /* Form wrapper with max width, padding, border and shadow */
     .form-wrapper {
       width: 100%;
       max-width: 480px;
@@ -78,10 +75,10 @@
       width: 100% !important;
     }
   </style>
-
 <div class="centered-container">
   <div class="form-wrapper">
     <h2 class="mb-4 text-center">Create Group</h2>
+    <p class="text-muted text-center mb-4">Create a new group and select users which you want to include into the group.</p>
 
     <form id="groupForm" novalidate>
       {% csrf_token %}
@@ -89,7 +86,7 @@
       {{ form|crispy }}
 
       <div class="d-flex justify-content-end">
-        <button type="submit" class="btn btn-primary px-4">
+        <button type="submit" class="btn btn-primary px-4 mt-4">
           Create Group
         </button>
       </div>
