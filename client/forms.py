@@ -108,3 +108,7 @@ class GroupCreateForm(forms.ModelForm):
             Field('name', css_class='mb-3'),
             Field('members', css_class='mb-3'),
         )
+
+
+class ExpenseCreateForm(forms.ModelForm):
+    pass

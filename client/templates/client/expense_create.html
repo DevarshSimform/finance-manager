@@ -1,0 +1,17 @@
+{% extends "client/base.html" %}
+{% load crispy_forms_tags %}
+
+
+{% block nav_content %}
+<nav class="navbar navbar-expand-lg navbar-light bg-light px-4">
+    <h2 class="navbar-brand m-0" id="pageTitle">Create Expense</h2>
+    <div class="ms-auto">
+        <button class="btn btn-danger" onclick="logout()">Logout</button>
+    </div>
+</nav>
+{% endblock nav_content %}
+
+
+{% block content %}
+<h1>Hello guys! welcome to expense create page</h1>
+{% endblock content %}

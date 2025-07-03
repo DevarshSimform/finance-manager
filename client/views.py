@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from client.forms import GroupCreateForm
+from client.forms import GroupCreateForm, ExpenseCreateForm
 
 
 def overview(request):
@@ -39,6 +39,10 @@ def list_group(request):
 def group_create_view(request):
     form = GroupCreateForm()
     return render(request, 'client/group_create.html', {'form': form})
+
+def expense_create_view(request):
+    # form = ExpenseCreateForm()
+    return render(request, 'client/expense_create.html')
 
 def list_transaction(request):
     return render(request, 'client/transactions.html')

@@ -16,6 +16,8 @@ urlpatterns = [
     path('groups/', views.list_group, name='groups'),
     path('group/create/', views.group_create_view, name='group_create'),
     path('groups/<int:group_id>/', views.get_group_detail, name='group_detail'),
+    path('expense/create/', views.expense_create_view, name='expense_create'),
+
 
     path('category-expense-analysis/', views.render_category_wise_expense, name='category-wise-expense'),
     path('transaction-analysis/', views.render_date_wise_transaction, name='date-wise-transaction'),
